@@ -1338,3 +1338,29 @@ button, .chip, .nav-tab, .quiz-option, .lang-card, .radio-pill { -webkit-tap-hig
   .toast-region { bottom: calc(1rem + env(safe-area-inset-bottom)) !important; }
 }
 @media (max-width: 400px) { .brand-name { display: block; } }
+
+/* ---------- 32. Fixes from real Android screenshots ---------- */
+/* Translate: no stretched gap between the language select and the button on phones */
+@media (max-width: 640px) {
+  .translate-row { display: grid; grid-template-columns: 1fr; gap: 0.75rem; align-items: stretch; }
+  .select-wrap { flex: none; }
+  .translate-row .btn { width: 100%; }
+}
+/* Speak: a lone Stop button spans the full row instead of sitting under two Play buttons */
+.listen-buttons { grid-auto-flow: row dense; }
+#speech-stop { grid-column: 1 / -1; }
+@media (min-width: 1500px) { #speech-stop { grid-column: auto; } }
+/* Header: pills and ☰ share one height, icons vertically centred */
+@media (max-width: 1100px) {
+  .stats, .stat, .menu-button, .brand { align-self: center; }
+  .stat, .menu-button { min-height: 44px; height: 44px; box-sizing: border-box; }
+  .stat { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0 0.7rem; }
+  .stat-icon, .stat-value, .goal-ring { display: inline-flex; align-items: center; line-height: 1; }
+  .stat-icon { font-size: 1.05rem; transform: translateY(-1px); }
+  .stat.is-lit .flame::before, .stat.is-lit .flame::after { display: none; }
+  .menu-button { border-radius: var(--pill); }
+  .toast-region { width: min(94vw, 440px); }
+  .toast { padding: 0.7rem 0.9rem; font-size: 0.92rem; }
+}
+
+@media (max-width: 1100px) { .lang-card, .word-item, .context-item, .quiz-option, .tile, .rtile { animation: none !important; opacity: 1; transform: none; } }

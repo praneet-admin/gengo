@@ -65,7 +65,7 @@
       rememberKey: false,
       apiKey: ''              // only populated when the learner opts in to remembering
     },
-    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false }
+    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {} }
   };
 
   let state = loadState();
@@ -118,6 +118,7 @@
     if (!Number.isInteger(merged.prefs.textSize) || merged.prefs.textSize < 0 || merged.prefs.textSize > 2) merged.prefs.textSize = 0;
     ['reduceMotion', 'highContrast', 'easyRead'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
     if (merged.prefs.speechEngine !== 'whisper') merged.prefs.speechEngine = 'auto';
+    if (!merged.prefs.voiceNotes || typeof merged.prefs.voiceNotes !== 'object') merged.prefs.voiceNotes = {};
     if (merged.prefs.practiceTarget !== 'example') merged.prefs.practiceTarget = 'word';
     if (SECTION_NAMES.indexOf(merged.prefs.section) === -1) merged.prefs.section = 'learn';
     ['endsAt', 'remainingMs'].forEach(function (k) { if (merged.timer[k] !== null && !Number.isFinite(merged.timer[k])) merged.timer[k] = k === 'endsAt' ? null : TIMER_DURATION; });
@@ -1323,6 +1324,18 @@
     });
     const v = speech.supported ? pickVoice('en-US') : null;
     const shortName = function (n) { return n.replace(/ Online.*$| \(.*?\)| - .*$/g, '').trim(); };
+    // Android/Chrome OS often ship one system voice per language with no gender: collapse the switch to a plain note.
+    const saved = state.prefs.voiceGender;
+    state.prefs.voiceGender = 'female'; const f = speech.supported ? pickVoice('en-US') : null;
+    state.prefs.voiceGender = 'male'; const m = speech.supported ? pickVoice('en-US') : null;
+    state.prefs.voiceGender = saved;
+    const single = !f || !m || f.voiceURI === m.voiceURI;
+    const fieldset = document.querySelector('.voice-choice');
+    if (fieldset) fieldset.hidden = single;
+    if (single) {
+      el.textContent = v ? 'Voice: ' + shortName(v.name) + ' (the only English voice on this device)' : 'No speech voices available in this browser.';
+      return;
+    }
     el.textContent = v ? 'English voice: ' + shortName(v.name) + (speech.lastPickExact ? '' : ' (no ' + state.prefs.voiceGender + ' voice found — nearest available)') : 'No speech voices available in this browser.';
   }
 
@@ -1375,10 +1388,14 @@
     utterance.pitch = 1;
     utterance.volume = 1;
     const voice = pickVoice(utterance.lang);
-    if (voice) utterance.voice = voice;
+    if (voice) { try { utterance.voice = voice; } catch (err) { /* voice object no longer valid (voices list changed) — let the browser choose */ } }
     const langKey = (utterance.lang || 'en').slice(0, 2);
-    if (voice && !speech.lastPickExact && !speech.warned[langKey]) {
+    const switchHidden = document.querySelector('.voice-choice') && document.querySelector('.voice-choice').hidden;
+    state.prefs.voiceNotes = state.prefs.voiceNotes || {};
+    if (voice && !speech.lastPickExact && !speech.warned[langKey] && !switchHidden && !state.prefs.voiceNotes[langKey]) {
       speech.warned[langKey] = true;
+      state.prefs.voiceNotes[langKey] = true;
+      saveState();
       const langName = (Object.keys(LANGUAGES).map(function (k) { return LANGUAGES[k]; }).find(function (l) { return l.speech.slice(0, 2) === langKey; }) || { name: langKey }).name;
       toast('Only one ' + langName + ' voice is installed (' + voice.name + '), so Male and Female sound the same for ' + langName + '.', 'info', 5000);
     }

@@ -1518,7 +1518,7 @@ html { scroll-padding-top: 120px; }
 
 /* ---------- 37. Header scrolls with the page on desktop (no sticky bar covering content) ---------- */
 @media (min-width: 1101px) {
-  .app-header, body.is-loaded .app-header { position: static; }
+  .app-header, body.is-loaded .app-header { position: relative; z-index: 20; } /* relative (not static) keeps the header above the fixed background blobs/floaters */
   .main-nav, .sidebar { top: 1rem; }
   html { scroll-padding-top: 1rem; }
 }

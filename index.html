@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gengo — build a personal English vocabulary through short daily sessions: look up words, translate them, hear and speak them, read them in context, quiz yourself, and keep a streak.">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <meta name="theme-color" content="#3b22a8">
+  <title>Gengo — Learn words that stick</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 6h40a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H30l-12 9v-9h-6A10 10 0 0 1 2 42V16A10 10 0 0 1 12 6z' fill='%233b22a8'/%3E%3Ctext x='32' y='40' font-family='Arial Rounded MT Bold,Arial,sans-serif' font-size='30' font-weight='700' fill='%23ffd233' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
+  <link rel="stylesheet" href="styles.css?v=41">
+</head>
+<body>
+  <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="floaters" id="floaters" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <button class="logo-btn" type="button" id="logo-button" aria-label="Gengo logo — say hello to Gen">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <path d="M12 6h40a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H30l-12 9v-9h-6A10 10 0 0 1 2 42V16A10 10 0 0 1 12 6z"/>
+        <text x="30" y="41" font-size="30" font-weight="700" text-anchor="middle" font-family="inherit">G</text>
+        <text class="logo-mark" x="50" y="22" font-size="11" text-anchor="middle">言</text>
+      </svg>
+      </button>
+      <div class="brand-text">
+        <h1 class="brand-name">Gengo</h1>
+        <p class="header-section" id="header-section" aria-hidden="true">Learn</p>
+        <p class="brand-tagline" aria-hidden="true">Say <span class="greeting is-in" id="greeting" lang="en">Hello</span></p>
+      </div>
+    </div>
+
+    <div class="header-tools" role="group" aria-label="Display settings">
+      <button class="tool-btn" type="button" id="motion-toggle" aria-pressed="false" title="Reduce motion"><span aria-hidden="true">✦</span><span class="tool-text">Motion</span></button>
+      <button class="tool-btn" type="button" id="contrast-toggle" aria-pressed="false" title="High contrast"><span aria-hidden="true">◐</span><span class="tool-text">Contrast</span></button>
+      <button class="tool-btn" type="button" id="textsize-toggle" aria-label="Text size: normal. Click to enlarge" title="Text size"><span aria-hidden="true">A</span><span class="tool-text" id="textsize-label">Text</span></button>
+      <button class="tool-btn" type="button" id="easyread-toggle" aria-pressed="false" aria-label="Easy-read mode" title="Easy-read mode: wider spacing, plain font"><span aria-hidden="true">Aa</span><span class="tool-text">Easy read</span></button>
+      <button class="tool-btn" type="button" id="shortcuts-button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (press ?)"><span aria-hidden="true">⌨</span><span class="tool-text">Keys</span></button>
+    </div>
+    <button class="tool-btn settings-button" type="button" id="settings-button" aria-label="Display settings" aria-haspopup="dialog"><span aria-hidden="true">⚙</span></button>
+    <button class="tool-btn menu-button" type="button" id="menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav"><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="menu-x" aria-hidden="true">✕</span></button>
+    <ul class="stats" aria-label="Your progress">
+      <li class="stat" id="stat-streak" title="Current streak">
+        <span class="stat-icon flame" aria-hidden="true">🔥</span>
+        <span class="stat-value" id="header-streak">0</span>
+        <span class="stat-label">streak</span>
+      </li>
+      <li class="stat" id="stat-xp" title="Experience points">
+        <span class="stat-icon" aria-hidden="true">✦</span>
+        <span class="stat-value" id="header-xp">0</span>
+        <span class="stat-label" id="header-level">Lvl 1</span>
+      </li>
+      <li class="stat stat-goal" title="Daily goal">
+        <span class="goal-ring" id="header-goal-bar" role="progressbar" aria-label="Daily goal progress" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" style="--pct:0"><span class="goal-ring-inner" aria-hidden="true">✓</span></span>
+        <span class="stat-value" id="header-goal">0/3</span>
+        <span class="stat-label">today</span>
+      </li>
+    </ul>
+
+  </header>
+
+  <div class="layout">
+    <div class="nav-backdrop" id="nav-backdrop" hidden></div>
+    <nav class="main-nav" id="main-nav" aria-label="Main">
+      <div class="nav-drawer-head">
+        <span class="nav-drawer-title">Menu</span>
+        <button class="tool-btn nav-close" type="button" id="nav-close" aria-label="Close menu"><span aria-hidden="true">✕</span></button>
+      </div>
+      <div class="nav-tabs" role="tablist" aria-label="Sections">
+        <button class="nav-tab" role="tab" type="button" id="tab-learn" aria-label="Learn" aria-controls="panel-learn" aria-selected="true" data-section="learn">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5V5.5M8 7h8M8 11h6"/></svg>
+          <span class="nav-text">Learn</span>
+        </button>
+        <button class="nav-tab" role="tab" type="button" id="tab-translate" aria-label="Translate" aria-controls="panel-translate" aria-selected="false" data-section="translate">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h9M8.5 3v2M11 5c-.6 3.5-3 6.5-6 8M6.5 8.5c1 2 2.5 3.6 4.5 4.5"/><path d="M13 20l4.5-11L22 20M14.6 16.5h5.8"/></svg>
+          <span class="nav-text">Translate</span>
+        </button>
+        <button class="nav-tab" role="tab" type="button" id="tab-speak" aria-label="Speak" aria-controls="panel-speak" aria-selected="false" data-section="speak">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
+          <span class="nav-text">Speak</span>
+        </button>
+        <button class="nav-tab" role="tab" type="button" id="tab-context" aria-label="Context" aria-controls="panel-context" aria-selected="false" data-section="context">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+          <span class="nav-text">Context</span>
+        </button>
+        <button class="nav-tab" role="tab" type="button" id="tab-quiz" aria-label="Quiz" aria-controls="panel-quiz" aria-selected="false" data-section="quiz">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7v.5"/><circle cx="12" cy="17.5" r=".8" fill="currentColor"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+          <span class="nav-text">Quiz</span>
+        </button>
+        <button class="nav-tab" role="tab" type="button" id="tab-words" aria-label="My Words" aria-controls="panel-words" aria-selected="false" data-section="words">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5zM19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/></svg>
+          <span class="nav-text">My Words</span> <span class="nav-badge" id="nav-words-badge" hidden>0</span>
+        </button>
+      </div>
+    </nav>
+    <main id="main" class="workspace" tabindex="-1">
+
+      <!-- ================= LEARN ================= -->
+      <section class="panel" id="panel-learn" role="tabpanel" aria-labelledby="tab-learn">
+        <div class="panel-head">
+          <h2 tabindex="-1">Learn a new word</h2>
+          <p class="panel-sub">Look it up, hear it, keep it.</p>
+        </div>
+
+        <form class="search-form" id="search-form" novalidate>
+          <label class="field-label" for="search-input">Search for a word</label>
+          <div class="search-row">
+            <input class="text-input" id="search-input" name="word" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. serendipity" required maxlength="40" inputmode="text">
+            <button class="btn btn-primary" id="search-button" type="submit">Explore</button>
+          </div>
+        </form>
+
+        <div class="chips" aria-label="Suggested words">
+                    <button class="chip" type="button" data-word="resilient">Resilient</button>
+          <button class="chip" type="button" data-word="eloquent">Eloquent</button>
+          <button class="chip" type="button" data-word="curious">Curious</button>
+          <button class="chip" type="button" data-word="serendipity">Serendipity</button>
+          <button class="chip" type="button" data-word="wanderlust">Wanderlust</button>
+          <button class="chip" type="button" data-word="meticulous">Meticulous</button>
+        </div>
+
+        <div class="result-area" id="result-area" aria-busy="false">
+          <div class="state-card" id="result-empty">
+            <div class="state-glyph" aria-hidden="true">言</div>
+            <h3>Your next word is waiting</h3>
+            <p>Type a word or tap a suggestion.</p>
+          </div>
+
+          <div class="skeleton-card" id="result-loading" hidden role="status">
+            <p class="skeleton-label">Looking up <strong id="loading-word"></strong>…</p>
+            <div class="skeleton sk-title"></div>
+            <div class="skeleton sk-line short"></div>
+            <div class="skeleton sk-line"></div>
+            <div class="skeleton sk-line"></div>
+            <div class="skeleton-row"><span class="skeleton sk-chip"></span><span class="skeleton sk-chip"></span><span class="skeleton sk-chip"></span></div>
+          </div>
+
+          <div class="state-card is-error" id="result-error" hidden role="alert">
+            <div class="state-glyph" aria-hidden="true">!</div>
+            <h3 id="error-title">Something went wrong</h3>
+            <p id="error-message"></p>
+            <div class="state-actions">
+              <button class="btn btn-secondary" type="button" id="error-retry">Try again</button>
+              <button class="btn btn-ghost" type="button" data-goto="quiz">Take a quiz instead</button>
+            </div>
+          </div>
+
+          <article class="word-card" id="result-card" hidden aria-labelledby="result-word">
+            <div class="word-card-top">
+              <div>
+                <h3 class="word-title" id="result-word"></h3>
+                <p class="word-meta">
+                  <span class="phonetic" id="result-phonetic"></span>
+                  <span class="pos-tag" id="result-pos"></span>
+                  <span class="source-note" id="result-source"></span>
+                </p>
+              </div>
+              <button class="btn btn-icon speak-btn" type="button" id="listen-word" data-speak="word" aria-label="Listen to the word">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8.5v2.1a6.5 6.5 0 0 1 0 12.8v2.1a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></svg>
+                <span class="speak-label">Listen</span>
+              </button>
+            </div>
+            <p class="audio-note" id="audio-note" hidden>No recording from the dictionary — using your browser's voice instead.</p>
+
+            <dl class="word-body">
+              <div class="word-row">
+                <dt>Meaning</dt>
+                <dd class="dd-with-action"><span id="result-definition"></span>
+                  <button class="btn btn-mini speak-btn" type="button" data-speak="definition" aria-label="Listen to the definition"><span class="speak-label">Listen</span></button>
+                </dd>
+              </div>
+              <div class="word-row">
+                <dt>Example</dt>
+                <dd class="dd-with-action"><span id="result-example" class="example"></span>
+                  <button class="btn btn-mini speak-btn" type="button" id="listen-example" data-speak="example" aria-label="Listen to the example sentence"><span class="speak-label">Listen</span></button>
+                </dd>
+              </div>
+              <div class="word-row" id="result-synonyms-row">
+                <dt>Synonyms</dt>
+                <dd><ul class="synonym-list" id="result-synonyms"></ul></dd>
+              </div>
+              <div class="word-row" id="result-antonyms-row">
+                <dt>Antonyms</dt>
+                <dd><ul class="synonym-list is-antonym" id="result-antonyms"></ul></dd>
+              </div>
+            </dl>
+
+            <div class="word-card-actions">
+              <button class="btn btn-primary" type="button" id="save-button">Save Word <span class="xp-pill">+10 XP</span></button>
+              <p class="saved-note" id="saved-note" hidden>✓ Saved <button class="link-btn link-btn-quiet" type="button" id="unsave-button">Remove</button></p>
+              <span class="saved-count" id="saved-count"></span>
+              <div class="next-steps" aria-label="Continue with this word">
+                <button class="link-btn" type="button" data-goto="translate">Translate →</button>
+                <button class="link-btn" type="button" data-goto="speak">Say it →</button>
+                <button class="link-btn" type="button" data-goto="context">In context →</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= TRANSLATE ================= -->
+      <section class="panel" id="panel-translate" role="tabpanel" aria-labelledby="tab-translate" hidden>
+        <div class="panel-head panel-head-row">
+          <div>
+            <h2 tabindex="-1">Translate</h2>
+            <p class="panel-sub">The word, its meaning, or anything you type.</p>
+          </div>
+          <button class="btn btn-ghost btn-small" type="button" id="translate-settings-toggle" aria-expanded="false" aria-controls="translate-settings">API settings</button>
+        </div>
+
+        <div class="settings-card" id="translate-settings" hidden>
+          <h3>LibreTranslate connection</h3>
+          <p class="settings-note">Optional. Without a key, Gengo translates through the free MyMemory service (limited daily quota). Add a LibreTranslate key from <span class="mono">portal.libretranslate.com</span> or a self-hosted server URL to use LibreTranslate instead.</p>
+          <div class="settings-grid">
+            <div>
+              <label class="field-label" for="lt-url">Server URL</label>
+              <input class="text-input" id="lt-url" type="url" placeholder="https://libretranslate.com" autocomplete="off" spellcheck="false">
+            </div>
+            <div>
+              <label class="field-label" for="lt-key">API key <span class="optional">(optional for self-hosted)</span></label>
+              <input class="text-input" id="lt-key" type="password" placeholder="Paste your key" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <label class="check-row">
+            <input type="checkbox" id="lt-remember">
+            <span>Remember the key on this device</span>
+          </label>
+          <p class="settings-warning" id="lt-remember-warning">Browser storage is not secure for sensitive credentials. Only remember a key you could revoke, and never a production secret. By default the key stays in memory and is forgotten when you close the tab.</p>
+          <div class="settings-actions">
+            <button class="btn btn-primary btn-small" type="button" id="lt-save">Save settings</button>
+            <button class="btn btn-ghost btn-small" type="button" id="lt-forget">Forget key</button>
+            <span class="settings-status" id="lt-status" role="status"></span>
+          </div>
+        </div>
+
+        <div class="translate-sources" id="translate-sources">
+          <span class="chips-label">Fill with:</span>
+          <button class="chip" type="button" data-fill="word">Current word</button>
+          <button class="chip" type="button" data-fill="definition">Its definition</button>
+          <button class="chip" type="button" data-fill="example">Its example</button>
+        </div>
+
+        <form class="translate-form" id="translate-form" novalidate>
+          <label class="field-label" for="translate-input">English text to translate</label>
+          <textarea class="text-input textarea" id="translate-input" rows="3" maxlength="600" placeholder="Your current word appears here — or type anything"></textarea>
+          <div class="lang-cards" id="lang-cards" aria-label="Quick language picker"></div>
+          <div class="translate-row">
+            <div class="select-wrap">
+              <label class="field-label" for="translate-target">Translate into</label>
+              <select class="text-input select" id="translate-target">
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="hi">Hindi</option>
+                <option value="ta">Tamil</option>
+                <option value="ja">Japanese</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" type="submit" id="translate-button">Translate</button>
+          </div>
+        </form>
+
+        <div id="translate-area" aria-busy="false">
+          <div class="state-card" id="translate-empty">
+            <div class="state-glyph" aria-hidden="true">⇄</div>
+            <h3>Nothing translated yet</h3>
+            <p>Pick a language, add some text, and press Translate.</p>
+          </div>
+          <div class="state-card is-setup" id="translate-setup" hidden>
+            <div class="state-glyph" aria-hidden="true">⚙</div>
+            <h3>Translation needs a connection</h3>
+            <p>Enter a LibreTranslate server URL (and API key if the server needs one) in API settings. Everything else in Gengo keeps working without it.</p>
+            <div class="state-actions"><button class="btn btn-secondary" type="button" id="translate-open-settings">Open API settings</button></div>
+          </div>
+          <div class="state-card is-loading" id="translate-loading" hidden role="status">
+            <div class="spinner" aria-hidden="true"></div>
+            <p>Translating…</p>
+          </div>
+          <div class="state-card is-error" id="translate-error" hidden role="alert">
+            <div class="state-glyph" aria-hidden="true">!</div>
+            <h3 id="translate-error-title">Translation failed</h3>
+            <p id="translate-error-message"></p>
+          </div>
+          <article class="translate-result" id="translate-result" hidden>
+            <div class="translate-col">
+              <p class="kicker">English</p>
+              <p class="translate-text" id="translate-source-text"></p>
+            </div>
+            <div class="translate-col is-target">
+              <p class="kicker" id="translate-target-label">Spanish</p>
+              <p class="translate-text" id="translate-target-text" lang="es"></p>
+              <button class="btn btn-icon speak-btn" type="button" id="listen-translation" data-speak="translation" aria-label="Listen to the translation">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8.5v2.1a6.5 6.5 0 0 1 0 12.8v2.1a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></svg>
+                <span class="speak-label">Listen</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= SPEAK ================= -->
+      <section class="panel" id="panel-speak" role="tabpanel" aria-labelledby="tab-speak" hidden>
+        <div class="panel-head">
+          <h2 tabindex="-1">Speak</h2>
+          <p class="panel-sub">Hear it, then say it back.</p>
+        </div>
+
+        <div class="state-card" id="speak-no-word">
+          <div class="state-glyph" aria-hidden="true">🎤</div>
+          <h3>Pick a word first</h3>
+          <p>Search for a word in Learn and it becomes your listening and speaking exercise here.</p>
+          <div class="state-actions"><button class="btn btn-primary" type="button" data-goto="learn">Go to Learn</button></div>
+        </div>
+
+        <div id="speak-content" hidden>
+          <div class="speak-grid">
+            <section class="sub-card" aria-labelledby="listen-heading">
+              <h3 id="listen-heading">Listening</h3>
+              <p class="side-sub">Current word: <strong id="speak-current-word"></strong></p>
+              <fieldset class="target-choice voice-choice">
+                <legend class="field-label">Voice</legend>
+                <label class="radio-pill"><input type="radio" name="voice-gender" id="voice-female" value="female" checked> <span id="voice-female-label">Female</span></label>
+                <label class="radio-pill"><input type="radio" name="voice-gender" id="voice-male" value="male"> <span id="voice-male-label">Male</span></label>
+              </fieldset>
+              <p class="sr-note voice-name" id="voice-name" role="status">English voice: …</p>
+              <details class="note-details"><summary>About voices</summary><p class="sr-note" id="voice-note">Uses your device’s built-in voices.</p></details>
+              <p class="side-sub" id="tts-unsupported" hidden>Speech synthesis isn't supported in this browser, so Listen buttons will use dictionary audio only.</p>
+              <div class="listen-buttons">
+                <button class="btn btn-secondary speak-btn" type="button" data-speak="word"><span class="speak-label">Play word</span></button>
+                <button class="btn btn-secondary speak-btn" type="button" data-speak="definition"><span class="speak-label">Play definition</span></button>
+                <button class="btn btn-secondary speak-btn" type="button" id="speak-play-example" data-speak="example"><span class="speak-label">Play example</span></button>
+                <button class="btn btn-ghost" type="button" id="speech-stop">Stop</button>
+              </div>
+            </section>
+
+            <section class="sub-card" aria-labelledby="practice-heading">
+              <h3 id="practice-heading">Speaking practice</h3>
+              <fieldset class="target-choice">
+                <legend class="field-label">Read aloud</legend>
+                <label class="radio-pill"><input type="radio" name="practice-target" value="word" checked> <span>The word</span></label>
+                <label class="radio-pill" id="practice-example-label"><input type="radio" name="practice-target" value="example"> <span>The example sentence</span></label>
+              </fieldset>
+              <blockquote class="practice-target" id="practice-target-text"></blockquote>
+
+              <div class="state-inline is-warning" id="sr-unsupported" hidden>
+                This browser can't record from a microphone. You can still listen, type, and quiz as usual.
+              </div>
+
+              <div id="sr-controls">
+                <div class="mic-row">
+                  <button class="btn btn-primary mic-btn" type="button" id="mic-button">
+                    <span class="mic-dot" aria-hidden="true"></span>
+                    <span id="mic-label">Start speaking</span>
+                  </button>
+                  <button class="btn btn-coral" type="button" id="mic-stop" hidden>Stop listening</button>
+                  <span class="wave" id="wave" hidden aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+                </div>
+                <p class="sr-status" id="sr-status" role="status" aria-live="polite">Press the microphone and read the text above aloud. You’ll be asked for mic permission the first time.</p>
+                <details class="note-details"><summary>Microphone not working?</summary><p class="sr-note" id="mic-help"></p></details>
+                <p class="sr-note" id="engine-note" hidden>Using on-device recognition (audio stays in your browser). <button class="link-btn link-btn-quiet" type="button" id="engine-reset">Try the browser's own recogniser again</button></p>
+                <div class="sr-result" id="sr-result" hidden>
+                  <p class="kicker">We heard</p>
+                  <p class="sr-heard" id="sr-heard"></p>
+                  <div class="meter" id="sr-meter" role="meter" aria-label="Match" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="--score:0" hidden><span></span></div>
+                  <p class="sr-feedback" id="sr-feedback"></p>
+                  <p class="sr-note">This compares recognised words to the target text — it is a rough match, not a pronunciation score.</p>
+                  <button class="btn btn-secondary btn-small" type="button" id="sr-retry">Try again</button>
+                </div>
+              </div>
+
+              <form class="type-practice" id="type-practice" novalidate>
+                <label class="field-label" for="type-input">Or type what you hear</label>
+                <p class="sr-note" id="type-hint">Press Play, then spell the word or sentence from memory.</p>
+                <div class="search-row">
+                  <input class="text-input" id="type-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type it here">
+                  <button class="btn btn-secondary" type="submit" id="type-check">Check</button>
+                </div>
+                <p class="sr-feedback" id="type-feedback" role="status" aria-live="polite" hidden></p>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CONTEXT ================= -->
+      <section class="panel" id="panel-context" role="tabpanel" aria-labelledby="tab-context" hidden>
+        <div class="panel-head">
+          <h2 tabindex="-1">Learn in context</h2>
+          <p class="panel-sub">How the word shows up in real writing.</p>
+        </div>
+
+        <form class="search-form" id="context-form" novalidate>
+          <label class="field-label" for="context-input">Search Wikipedia</label>
+          <div class="search-row">
+            <input class="text-input" id="context-input" type="text" autocomplete="off" placeholder="Defaults to your current word" maxlength="80">
+            <button class="btn btn-primary" type="submit" id="context-button">Find articles</button>
+          </div>
+        </form>
+
+        <div id="context-area" aria-busy="false">
+          <div class="state-card" id="context-empty">
+            <div class="state-glyph" aria-hidden="true">📖</div>
+            <h3>See the word in the wild</h3>
+            <p>Search for a word in Learn, or type a topic above, to pull in short Wikipedia excerpts.</p>
+          </div>
+          <div class="state-card is-loading" id="context-loading" hidden role="status">
+            <div class="spinner" aria-hidden="true"></div>
+            <p>Searching Wikipedia for <strong id="context-loading-word"></strong>…</p>
+          </div>
+          <div class="state-card is-error" id="context-error" hidden role="alert">
+            <div class="state-glyph" aria-hidden="true">!</div>
+            <h3 id="context-error-title">Wikipedia is unavailable</h3>
+            <p id="context-error-message"></p>
+            <div class="state-actions"><button class="btn btn-secondary" type="button" id="context-retry">Try again</button></div>
+          </div>
+          <div class="state-card" id="context-none" hidden>
+            <div class="state-glyph" aria-hidden="true">∅</div>
+            <h3 id="context-none-title">No articles found</h3>
+            <p>Wikipedia has nothing close to that phrase. Try a related noun or a broader topic.</p>
+          </div>
+          <ul class="context-list" id="context-list" aria-label="Wikipedia results"></ul>
+        </div>
+      </section>
+
+      <!-- ================= QUIZ ================= -->
+      <section class="panel" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+        <div class="panel-head">
+          <h2 tabindex="-1">Quiz</h2>
+          <p class="panel-sub">Match the meaning to the word.</p>
+        </div>
+
+        <div id="quiz-area">
+          <div class="state-card" id="quiz-empty" hidden>
+            <div class="state-glyph" aria-hidden="true">🧩</div>
+            <h3>Almost ready to quiz</h3>
+            <p id="quiz-empty-message">Save 4 words to unlock the quiz.</p>
+            <div class="state-actions"><button class="btn btn-primary" type="button" data-goto="learn">Find words</button></div>
+          </div>
+
+          <div class="quiz-progress-row" id="quiz-progress-row">
+            <div class="quiz-progress" id="quiz-progress" role="progressbar" aria-label="Round progress" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span></div>
+            <span class="quiz-round-label" id="quiz-round-label">Question 1 of 5</span>
+          </div>
+          <article class="quiz-card" id="quiz-card" hidden>
+            <div class="quiz-top"><p class="kicker">Which word means…</p><span class="combo" id="quiz-combo" hidden aria-live="polite"></span></div>
+            <blockquote class="quiz-definition" id="quiz-definition"></blockquote>
+            <div class="quiz-options" id="quiz-options" role="group" aria-label="Answer options"></div>
+            <div class="quiz-footer" id="quiz-footer" hidden>
+              <div class="quiz-feedback" id="quiz-feedback" role="status" aria-live="polite"></div>
+              <button class="btn btn-primary btn-lg" type="button" id="quiz-next">Continue</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- ================= MY WORDS ================= -->
+      <section class="panel" id="panel-words" role="tabpanel" aria-labelledby="tab-words" hidden>
+        <div class="panel-head panel-head-row">
+          <div>
+            <h2 tabindex="-1">My Words</h2>
+            <p class="panel-sub" id="words-count">No words saved yet</p>
+          </div>
+          <button class="btn btn-ghost btn-small btn-danger-text" type="button" id="clear-all">Clear All</button>
+        </div>
+
+        <div class="filter-row">
+          <label class="field-label" for="words-filter">Filter</label>
+          <input class="text-input" id="words-filter" type="search" placeholder="Search by word or meaning" autocomplete="off">
+        </div>
+
+        <div class="state-card" id="words-empty">
+          <div class="state-glyph" aria-hidden="true">📚</div>
+          <h3>Your collection is empty</h3>
+          <p>Words you save in Learn appear here.</p>
+          <div class="state-actions"><button class="btn btn-primary" type="button" data-goto="learn">Go to Learn</button></div>
+        </div>
+        <p class="state-inline" id="words-no-match" hidden>No saved words match that filter.</p>
+
+        <ul class="word-list" id="word-list" aria-label="Saved words"></ul>
+      </section>
+    </main>
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" aria-label="Focus and habits">
+      <section class="side-card buddy-card" aria-labelledby="buddy-heading">
+        <svg class="buddy" id="buddy" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <path class="body" d="M18 12h64a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H48l-16 14v-14H18A10 10 0 0 1 8 66V22a10 10 0 0 1 10-10z"/>
+          <text class="mark" x="80" y="26" font-size="11" text-anchor="middle" font-weight="700">言</text>
+          <circle class="cheek" cx="30" cy="54" r="5"/><circle class="cheek" cx="70" cy="54" r="5"/>
+          <ellipse class="eye left" cx="38" cy="42" rx="4.5" ry="6"/>
+          <ellipse class="eye right" cx="62" cy="42" rx="4.5" ry="6"/>
+          <path class="brow" d="M31 31 L44 35"/><path class="brow" d="M69 31 L56 35"/>
+          <path class="mouth mouth-idle" d="M42 60 Q50 66 58 60"/>
+          <path class="mouth mouth-happy" d="M40 60 Q50 72 60 60"/>
+          <path class="mouth mouth-cheer" d="M38 58 Q50 76 62 58 Z"/>
+          <path class="mouth mouth-sad" d="M40 66 Q50 56 60 66"/>
+          <path class="mouth mouth-think" d="M44 63 L58 63"/>
+        </svg>
+        <div>
+          <span class="buddy-name" id="buddy-heading">Gen says</span>
+          <p class="buddy-bubble" id="buddy-bubble">Hi! Let’s learn a word today.</p>
+        </div>
+      </section>
+      <section class="side-card timer-card" id="timer-card" aria-labelledby="timer-heading">
+        <div class="side-card-head">
+          <h2 id="timer-heading">Focus Sprint</h2>
+          <span class="xp-pill">+15 XP</span>
+        </div>
+        <p class="side-sub" id="timer-sub">Five focused minutes.</p>
+        <div class="timer-ring" id="timer-ring" style="--progress:0">
+          <div class="timer-display" id="timer-display" role="timer" aria-live="off" aria-atomic="true">05:00</div>
+        </div>
+        <p class="timer-status" id="timer-status" role="status" aria-live="polite">Ready when you are.</p>
+        <div class="timer-controls">
+          <button class="btn btn-primary" type="button" id="timer-start">Start</button>
+          <button class="btn btn-secondary" type="button" id="timer-pause" hidden>Pause</button>
+          <button class="btn btn-ghost" type="button" id="timer-reset" hidden>Reset</button>
+        </div>
+      </section>
+
+      <section class="side-card" aria-labelledby="habit-heading">
+        <div class="side-card-head">
+          <h2 id="habit-heading">Today</h2>
+          <button class="goal-pill" id="side-goal" type="button" aria-label="Show today’s recap">0/3</button>
+        </div>
+        <div class="goal-path" id="goal-path" style="--done:0" role="progressbar" aria-label="Daily goal progress" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">
+          <div class="path-line"><div class="path-fill"></div></div>
+          <div class="node" style="--n:0"><span class="node-face" aria-hidden="true">1</span></div>
+          <div class="node" style="--n:1"><span class="node-face" aria-hidden="true">2</span></div>
+          <div class="node is-goal" style="--n:2"><span class="node-face" aria-hidden="true">★</span></div>
+        </div>
+        <p class="goal-note" id="goal-note">3 activities a day keep the streak alive.</p>
+        <ol class="week-strip" id="week-strip" aria-label="Activity over the last seven days"></ol>
+        <div class="habit-grid">
+          <div class="habit-stat habit-flame">
+            <svg class="big-flame" id="big-flame" viewBox="0 0 64 80" aria-hidden="true" focusable="false" style="--heat:0">
+              <path class="flame-outer" d="M32 4c2 14 14 18 14 36a14 14 0 0 1-28 0c0-8 5-11 6-18 4 4 6 8 6 12 4-6 2-20 2-30z"/>
+              <path class="flame-inner" d="M32 40c1 6 6 8 6 15a6 6 0 0 1-12 0c0-4 2-5 3-8 1 2 2 3 2 5 1-3 1-8 1-12z"/>
+            </svg>
+            <span class="habit-value flame-count" id="flame-count">0</span>
+            <span class="habit-value sr-only" id="habit-current">0</span>
+            <span class="habit-label">day streak</span>
+          </div>
+          <div class="habit-stat">
+            <span class="habit-value" id="habit-longest">0</span>
+            <span class="habit-label">best streak</span>
+          </div>
+        </div>
+        <p class="milestone" id="milestone-message" hidden></p>
+        <div class="level-row">
+          <div class="level-head"><strong id="level-name">Level 1</strong><span class="goal-note" id="level-note">0 XP · 50 XP to Level 2</span></div>
+          <div class="progress-track is-thin" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="level-bar"><div class="progress-fill" id="level-fill"></div></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="sr-only" id="sr-announcer" aria-live="polite" aria-atomic="true"></div>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+  <dialog class="confirm settings" id="settings-dialog" aria-labelledby="settings-title">
+    <div class="confirm-form">
+      <h2 id="settings-title">Display settings</h2>
+      <div id="settings-host" class="settings-host"></div>
+      <div class="confirm-actions"><button class="btn btn-primary" type="button" id="settings-close">Done</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm shortcuts" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+    <div class="confirm-form">
+      <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+      <p>Everything works with Tab, Enter and the arrow keys. These are extras for speed.</p>
+      <dl class="shortcut-list">
+        <div><dt><kbd data-alt>Alt</kbd> + <kbd>1</kbd>–<kbd>6</kbd></dt><dd>Jump to Learn, Translate, Speak, Context, Quiz, My Words</dd></div>
+        <div><dt><kbd>←</kbd> <kbd>→</kbd> on a tab</dt><dd>Move between sections</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Focus the word search</dd></div>
+        <div><dt><kbd>1</kbd>–<kbd>4</kbd> or <kbd>A</kbd>–<kbd>D</kbd></dt><dd>Choose a quiz answer</dd></div>
+        <div><dt><kbd>Enter</kbd> after answering</dt><dd>Continue to the next question</dd></div>
+        <div><dt><kbd>L</kbd></dt><dd>Listen to the current word</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close any dialog, stop audio</dd></div>
+        <div><dt><kbd>?</kbd></dt><dd>Show this list</dd></div>
+      </dl>
+      <div class="confirm-actions"><button class="btn btn-primary" type="button" id="shortcuts-close">Got it</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="recap round" id="round-dialog" aria-labelledby="round-title">
+    <div class="recap-body round-body">
+      <div class="round-stage" id="round-stage">
+        <svg class="buddy round-buddy" id="round-buddy" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <path class="body" d="M18 12h64a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H48l-16 14v-14H18A10 10 0 0 1 8 66V22a10 10 0 0 1 10-10z"/>
+          <text class="mark" x="80" y="26" font-size="11" text-anchor="middle" font-weight="700">言</text>
+          <circle class="cheek" cx="30" cy="54" r="5"/><circle class="cheek" cx="70" cy="54" r="5"/>
+          <ellipse class="eye left" cx="38" cy="42" rx="4.5" ry="6"/><ellipse class="eye right" cx="62" cy="42" rx="4.5" ry="6"/>
+          <path class="brow" d="M31 31 L44 35"/><path class="brow" d="M69 31 L56 35"/>
+          <path class="mouth mouth-idle" d="M42 60 Q50 66 58 60"/>
+          <path class="mouth mouth-happy" d="M40 60 Q50 72 60 60"/>
+          <path class="mouth mouth-cheer" d="M38 58 Q50 76 62 58 Z"/>
+          <path class="mouth mouth-sad" d="M40 66 Q50 56 60 66"/>
+          <path class="mouth mouth-think" d="M44 63 L58 63"/>
+        </svg>
+        <span class="burst b1" aria-hidden="true">✦</span><span class="burst b2" aria-hidden="true">✦</span><span class="burst b3" aria-hidden="true">✦</span>
+      </div>
+      <h2 id="round-title" class="round-title">Round complete!</h2>
+      <ul class="round-tiles">
+        <li class="rtile rtile-xp"><span class="rtile-label">Total XP</span><strong class="rtile-value">⚡ <span id="round-xp">0</span></strong></li>
+        <li class="rtile rtile-acc"><span class="rtile-label" id="round-grade">Good</span><strong class="rtile-value">🎯 <span id="round-acc">0%</span></strong></li>
+        <li class="rtile rtile-time"><span class="rtile-label">Speedy</span><strong class="rtile-value">⏱ <span id="round-time">0:00</span></strong></li>
+      </ul>
+      <button class="btn btn-primary btn-lg" type="button" id="round-continue">Continue</button>
+    </div>
+  </dialog>
+
+  <dialog class="recap" id="recap-dialog" aria-labelledby="recap-title" aria-describedby="recap-sub">
+    <div class="recap-body">
+      <svg class="big-flame recap-flame" id="recap-flame" viewBox="0 0 64 80" aria-hidden="true" focusable="false" style="--heat:0">
+        <path class="flame-outer" d="M32 4c2 14 14 18 14 36a14 14 0 0 1-28 0c0-8 5-11 6-18 4 4 6 8 6 12 4-6 2-20 2-30z"/>
+        <path class="flame-inner" d="M32 40c1 6 6 8 6 15a6 6 0 0 1-12 0c0-4 2-5 3-8 1 2 2 3 2 5 1-3 1-8 1-12z"/>
+      </svg>
+      <p class="recap-streak"><strong id="recap-streak">0</strong> day streak</p>
+      <h2 id="recap-title">Goal complete!</h2>
+      <p class="recap-sub" id="recap-sub">Here’s what you did today.</p>
+      <ul class="recap-tiles">
+        <li class="tile tile-xp"><span class="tile-label">XP earned</span><strong class="tile-value" id="recap-xp">0</strong></li>
+        <li class="tile tile-saves"><span class="tile-label">Words saved</span><strong class="tile-value" id="recap-saves">0</strong></li>
+        <li class="tile tile-quiz"><span class="tile-label">Quiz correct</span><strong class="tile-value" id="recap-quiz">0</strong></li>
+        <li class="tile tile-sprints"><span class="tile-label">Sprints</span><strong class="tile-value" id="recap-sprints">0</strong></li>
+      </ul>
+      <button class="btn btn-lime btn-lg" type="button" id="recap-close">Continue</button>
+    </div>
+  </dialog>
+
+  <dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog" class="confirm-form">
+      <h2 id="confirm-title">Clear all saved words?</h2>
+      <p id="confirm-message">This removes every saved word. Your XP and streak stay with you.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" type="button" id="confirm-cancel">Keep my words</button>
+        <button class="btn btn-coral" type="button" id="confirm-accept">Clear everything</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js?v=47"></script>
+</body>
+</html>

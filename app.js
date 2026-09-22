@@ -372,7 +372,7 @@
   function spawnFloaters() {
     if (motionReduced()) return;
     const layer = $('floaters');
-    const glyphs = ['a', 'e', 'g', 'k', 'n', 'o', 's', 'w', 'y', '言', '語', '✦', '?', '!', 'ñ', 'é', 'あ', 'ü', 'ß', 'ç'];
+    const glyphs = ['🐰', 'a', '🥕', 'e', 'g', '🐰', 'k', 'n', 'o', '🥕', 's', 'w', '言', '語', '✦', '?', 'ñ', 'é', 'あ', '🐰'];
     const colors = ['var(--brand-500)', 'var(--accent-500)', 'var(--danger-500)', 'var(--mint-500)', 'var(--brand-700)'];
     for (let i = 0; i < 26; i++) {
       const f = document.createElement('span');
@@ -448,7 +448,7 @@
     });
   }
 
-  const BUDDY_IDLE = ['Hi! Let’s learn a word today.', 'Pick a word — any word.', 'Say it out loud. I won’t judge.', 'Three activities and today is done.'];
+  const BUDDY_IDLE = ['Hi! Let’s learn a word today.', 'Pick a word — any word.', 'Say it out loud. I won’t judge.', 'Three activities and today is done.', 'Words are my carrots. Feed me.', 'Hop in — one word at a time.'];
 
   /** Little ✦ burst inside an element (correct answers, saves). */
   function sparkle(el, count) {

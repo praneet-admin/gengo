@@ -1337,7 +1337,7 @@ button, .chip, .nav-tab, .quiz-option, .lang-card, .radio-pill { -webkit-tap-hig
   .layout { padding-bottom: 1.25rem !important; }
   .toast-region { bottom: calc(1rem + env(safe-area-inset-bottom)) !important; }
 }
-@media (max-width: 400px) { .brand-name { display: block; } }
+
 
 /* ---------- 32. Fixes from real Android screenshots ---------- */
 /* Translate: no stretched gap between the language select and the button on phones */
@@ -1364,3 +1364,89 @@ button, .chip, .nav-tab, .quiz-option, .lang-card, .radio-pill { -webkit-tap-hig
 }
 
 @media (max-width: 1100px) { .lang-card, .word-item, .context-item, .quiz-option, .tile, .rtile { animation: none !important; opacity: 1; transform: none; } }
+
+/* ==========================================================================
+   33. Gengo bunny — the mascot, everywhere
+   ========================================================================== */
+.bunny { --fur: #9f86e6; --fur-dark: #7c5fd6; --outline: #2a1560; --ear-inner: #f3c9f7; --muzzle: #fff; --cheek: #e7a3e0; overflow: visible; }
+.bunny .fur, .bunny .ear > ellipse:first-child, .bunny .paw { fill: var(--fur); stroke: var(--outline); stroke-width: 4; stroke-linejoin: round; }
+.bunny .ear-inner { fill: var(--ear-inner); stroke: none; }
+.bunny .foot, .bunny .muzzle, .bunny .eye-white { fill: var(--muzzle); stroke: var(--outline); stroke-width: 4; }
+.bunny .eye-white { stroke-width: 3; }
+.bunny .pads { fill: var(--fur-dark); }
+.bunny .cheek { fill: var(--cheek); opacity: 0.8; }
+.bunny .pupil { fill: var(--outline); }
+.bunny .shine { fill: #fff; }
+.bunny .nose { fill: #f472b6; stroke: var(--outline); stroke-width: 2.5; }
+.bunny .tuft, .bunny .whiskers path, .bunny .brow { fill: none; stroke: var(--outline); stroke-width: 3.5; stroke-linecap: round; }
+.bunny .brow { opacity: 0; }
+.bunny .mouth { fill: none; stroke: var(--outline); stroke-width: 3.5; stroke-linecap: round; display: none; }
+.bunny .mouth-idle { display: block; }
+.bunny .mouth-happy, .bunny .mouth-cheer { fill: var(--outline); }
+.bunny .tongue { fill: #f9a8d4; stroke: none; display: none; }
+.bunny .teeth { fill: #fff; stroke: none; display: none; }
+.bunny .carrot { fill: #ff9f1c; stroke: var(--outline); stroke-width: 4; }
+.bunny .carrot-stripe { fill: none; stroke: #e07b00; stroke-width: 3; stroke-linecap: round; opacity: 0.8; }
+.bunny .carrot-text { font-family: var(--font); font-weight: 900; font-size: 22px; fill: #fff; stroke: var(--outline); stroke-width: 4; paint-order: stroke fill; letter-spacing: 0.5px; }
+.bunny .leaves ellipse { fill: #4ade80; stroke: var(--outline); stroke-width: 3.5; }
+/* pupils follow the pointer (set by JS on .eye) */
+.bunny .eye { transform: translate(var(--ex, 0), var(--ey, 0)); transition: transform 120ms ease-out; }
+.bunny .eye .pupil, .bunny .eye .shine { transform-box: fill-box; }
+/* blink: squash the whole eye */
+.bunny .eye { transform-box: fill-box; transform-origin: center; animation: bunny-blink 4.4s infinite; }
+.bunny .eye-right { animation-delay: 0.08s; }
+@keyframes bunny-blink { 0%, 93%, 100% { transform: translate(var(--ex, 0), var(--ey, 0)) scaleY(1); } 96% { transform: translate(var(--ex, 0), var(--ey, 0)) scaleY(0.08); } }
+/* idle: gentle breathing + ear twitch */
+.buddy.bunny { animation: bunny-breathe 3.4s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes bunny-breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.01, 0.99); } }
+.bunny .ear { transform-box: fill-box; transform-origin: 50% 100%; }
+.bunny .ear-left { animation: ear-twitch 5s ease-in-out infinite; }
+.bunny .ear-right { animation: ear-twitch 5s ease-in-out 2.5s infinite; }
+@keyframes ear-twitch { 0%, 88%, 100% { transform: rotate(0); } 91% { transform: rotate(-9deg); } 94% { transform: rotate(6deg); } 97% { transform: rotate(-3deg); } }
+/* moods (set by buddySay) */
+.bunny.is-happy { animation: bunny-hop 700ms var(--bounce); }
+.bunny.is-happy .mouth-idle { display: none; } .bunny.is-happy .mouth-happy { display: block; }
+.bunny.is-happy .ear-left { animation: ear-perk 700ms var(--bounce); } .bunny.is-happy .ear-right { animation: ear-perk-r 700ms var(--bounce); }
+.bunny.is-cheer { animation: bunny-cheer 1s var(--bounce); }
+.bunny.is-cheer .mouth-idle { display: none; } .bunny.is-cheer .mouth-cheer, .bunny.is-cheer .teeth { display: block; }
+.bunny.is-cheer .bunny-carrot { animation: carrot-wave 600ms ease-in-out 2; transform-box: fill-box; transform-origin: 30% 60%; }
+.bunny.is-cheer .eye { transform: translate(var(--ex, 0), var(--ey, 0)) scaleY(0.15); animation: none; }
+.bunny.is-sad { animation: bunny-wobble 700ms var(--ease); }
+.bunny.is-sad .mouth-idle { display: none; } .bunny.is-sad .mouth-sad { display: block; }
+.bunny.is-sad .brow { opacity: 1; }
+.bunny.is-sad .ear { animation: none; transform: rotate(var(--droop, -18deg)); transition: transform 300ms var(--ease); }
+.bunny.is-sad .ear-right { --droop: 18deg; }
+.bunny.is-think .mouth-idle { display: none; } .bunny.is-think .mouth-think { display: block; }
+.bunny.is-think .eye { transform: translate(3px, -2px); animation: none; }
+.bunny.is-think .ear-right { animation: none; transform: rotate(14deg); transition: transform 300ms var(--ease); }
+@keyframes bunny-hop { 0% { transform: translateY(0); } 35% { transform: translateY(-22px) scale(1.04, 0.96); } 65% { transform: translateY(0) scale(0.97, 1.05); } 100% { transform: none; } }
+@keyframes bunny-cheer { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-26px) rotate(-6deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(-16px) rotate(6deg); } 100% { transform: none; } }
+@keyframes bunny-wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 60% { transform: rotate(5deg); } }
+@keyframes ear-perk { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(-16deg) scaleY(1.06); } }
+@keyframes ear-perk-r { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(16deg) scaleY(1.06); } }
+@keyframes carrot-wave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-10deg) translateY(-4px); } }
+/* placements */
+.logo.bunny { width: 54px; height: 62px; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.25)); animation: float 4s ease-in-out infinite; }
+.logo.bunny .carrot-text { font-size: 24px; }
+.logo.bunny .whiskers { display: none; }
+.logo.is-wink { animation: wink 600ms var(--bounce); }
+.buddy-card { grid-template-columns: 110px 1fr; }
+.buddy.bunny { width: 110px; height: 128px; }
+.round-buddy.bunny { width: 150px; height: 174px; }
+.round-buddy.is-cheer { animation: bunny-cheer 1.2s var(--bounce) infinite; }
+.round-buddy.is-happy { animation: bunny-hop 900ms var(--bounce) infinite; }
+@media (max-width: 1100px) { .logo.bunny { width: 40px; height: 46px; } .buddy-card { grid-template-columns: 84px 1fr; } .buddy.bunny { width: 84px; height: 98px; } }
+@media (prefers-reduced-motion: reduce) { .bunny, .bunny *, .logo.bunny { animation: none !important; } }
+body.reduce-motion .bunny, body.reduce-motion .bunny * { animation: none !important; }
+/* high contrast / forced colours */
+@media (forced-colors: active) { .bunny .fur, .bunny .paw, .bunny .carrot, .bunny .leaves ellipse, .bunny .ear > ellipse:first-child { fill: Canvas; } }
+
+/* very narrow phones: bunny + section label only, so the stats never crowd the title */
+@media (max-width: 430px) {
+  .brand-name { display: none; }
+  .header-section { font-size: 0.68rem; }
+  .stat { padding: 0 0.5rem; }
+  .stats { gap: 0.25rem; }
+}
+
+@media (max-width: 400px) { .lang-cards { grid-template-columns: repeat(2, 1fr); } }

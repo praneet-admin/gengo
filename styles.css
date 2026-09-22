@@ -1515,3 +1515,10 @@ html { scroll-padding-top: 120px; }
 .floater { opacity: 0; }
 @keyframes float-up { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 8% { opacity: 0.32; } 92% { opacity: 0.26; } 100% { transform: translate(var(--drift), -120vh) rotate(var(--spin)); opacity: 0; } }
 .floater.is-ring { border-width: 2px; }
+
+/* ---------- 37. Header scrolls with the page on desktop (no sticky bar covering content) ---------- */
+@media (min-width: 1101px) {
+  .app-header, body.is-loaded .app-header { position: static; }
+  .main-nav, .sidebar { top: 1rem; }
+  html { scroll-padding-top: 1rem; }
+}

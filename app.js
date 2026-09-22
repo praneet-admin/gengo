@@ -2325,7 +2325,8 @@
     if (focusPanel) $('panel-' + name).querySelector('h2').focus();
     else if (leaving !== name) announce($('tab-' + name).getAttribute('aria-label') + ' section');
     if (leaving !== name && window.matchMedia('(max-width: 1100px)').matches) {
-      const headerH = document.querySelector('.app-header').getBoundingClientRect().height;
+      const header = document.querySelector('.app-header');
+      const headerH = getComputedStyle(header).position === 'sticky' ? header.getBoundingClientRect().height : 0;
       const top = $('panel-' + name).getBoundingClientRect().top + window.scrollY - headerH - 12;
       window.scrollTo({ top: Math.max(0, top), behavior: motionReduced() ? 'auto' : 'smooth' });
     }
@@ -2711,6 +2712,8 @@
     applyDisplayPrefs();
     spawnFloaters();
     applyPlatformText();
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
     requestAnimationFrame(function () { document.body.classList.add('is-loaded'); });
     $('buddy-bubble').textContent = BUDDY_IDLE[Math.floor(Math.random() * BUDDY_IDLE.length)];
     window.setInterval(tick, 1000);

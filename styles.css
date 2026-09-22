@@ -1522,3 +1522,13 @@ html { scroll-padding-top: 120px; }
   .main-nav, .sidebar { top: 1rem; }
   html { scroll-padding-top: 1rem; }
 }
+
+/* ---------- 38. Brand name: solid white, extra-heavy, soft depth (reference: white bubble lettering on indigo) ---------- */
+.brand-name {
+  font-family: var(--font); font-weight: 900; color: #fff; opacity: 1;
+  letter-spacing: -0.02em; line-height: 1;
+  text-shadow: 0 2px 0 rgba(30, 14, 80, 0.35), 0 4px 14px rgba(30, 14, 80, 0.35);
+  -webkit-text-stroke: 0.5px rgba(255,255,255,0.6);
+}
+.brand-name { font-size: 2.4rem; }
+@media (max-width: 1100px) { .brand-name { font-size: 1.6rem; } }

@@ -382,7 +382,7 @@
       f.style.setProperty('--x', (Math.random() * 100).toFixed(1) + 'vw');
       f.style.setProperty('--d', (16 + Math.random() * 20).toFixed(1) + 's');
       f.style.setProperty('--delay', (-Math.random() * 36).toFixed(1) + 's');
-      f.style.setProperty('--size', (1.6 + Math.random() * 3).toFixed(2) + 'rem');
+      f.style.setProperty('--size', (0.7 + Math.random() * 1.1).toFixed(2) + 'rem'); // small bits, not billboards
       f.style.setProperty('--drift', ((Math.random() - 0.5) * 16).toFixed(1) + 'vw');
       f.style.setProperty('--spin', (Math.random() > 0.5 ? 1 : -1) * Math.round(90 + Math.random() * 270) + 'deg');
       f.style.color = colors[i % colors.length];
@@ -2325,7 +2325,8 @@
     if (focusPanel) $('panel-' + name).querySelector('h2').focus();
     else if (leaving !== name) announce($('tab-' + name).getAttribute('aria-label') + ' section');
     if (leaving !== name && window.matchMedia('(max-width: 1100px)').matches) {
-      const top = $('panel-' + name).getBoundingClientRect().top + window.scrollY - 16;
+      const headerH = document.querySelector('.app-header').getBoundingClientRect().height;
+      const top = $('panel-' + name).getBoundingClientRect().top + window.scrollY - headerH - 12;
       window.scrollTo({ top: Math.max(0, top), behavior: motionReduced() ? 'auto' : 'smooth' });
     }
   }

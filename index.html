@@ -207,32 +207,6 @@
             <h2 tabindex="-1">Translate</h2>
             <p class="panel-sub">The word, its meaning, or anything you type.</p>
           </div>
-          <button class="btn btn-ghost btn-small" type="button" id="translate-settings-toggle" aria-expanded="false" aria-controls="translate-settings">API settings</button>
-        </div>
-
-        <div class="settings-card" id="translate-settings" hidden>
-          <h3>LibreTranslate connection</h3>
-          <p class="settings-note">Optional. Without a key, Gengo translates through the free MyMemory service (limited daily quota). Add a LibreTranslate key from <span class="mono">portal.libretranslate.com</span> or a self-hosted server URL to use LibreTranslate instead.</p>
-          <div class="settings-grid">
-            <div>
-              <label class="field-label" for="lt-url">Server URL</label>
-              <input class="text-input" id="lt-url" type="url" placeholder="https://libretranslate.com" autocomplete="off" spellcheck="false">
-            </div>
-            <div>
-              <label class="field-label" for="lt-key">API key <span class="optional">(optional for self-hosted)</span></label>
-              <input class="text-input" id="lt-key" type="password" placeholder="Paste your key" autocomplete="off" spellcheck="false">
-            </div>
-          </div>
-          <label class="check-row">
-            <input type="checkbox" id="lt-remember">
-            <span>Remember the key on this device</span>
-          </label>
-          <p class="settings-warning" id="lt-remember-warning">Browser storage is not secure for sensitive credentials. Only remember a key you could revoke, and never a production secret. By default the key stays in memory and is forgotten when you close the tab.</p>
-          <div class="settings-actions">
-            <button class="btn btn-primary btn-small" type="button" id="lt-save">Save settings</button>
-            <button class="btn btn-ghost btn-small" type="button" id="lt-forget">Forget key</button>
-            <span class="settings-status" id="lt-status" role="status"></span>
-          </div>
         </div>
 
         <div class="translate-sources" id="translate-sources">
@@ -270,12 +244,6 @@
             <div class="state-glyph" aria-hidden="true">⇄</div>
             <h3>Nothing translated yet</h3>
             <p>Pick a language, add some text, and press Translate.</p>
-          </div>
-          <div class="state-card is-setup" id="translate-setup" hidden>
-            <div class="state-glyph" aria-hidden="true">⚙</div>
-            <h3>Translation needs a connection</h3>
-            <p>Enter a LibreTranslate server URL (and API key if the server needs one) in API settings. Everything else in Gengo keeps working without it.</p>
-            <div class="state-actions"><button class="btn btn-secondary" type="button" id="translate-open-settings">Open API settings</button></div>
           </div>
           <div class="state-card is-loading" id="translate-loading" hidden role="status">
             <div class="spinner" aria-hidden="true"></div>
@@ -659,6 +627,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=57"></script>
+  <script src="app.js?v=58"></script>
 </body>
 </html>

@@ -1116,7 +1116,7 @@
   let translateKeyInMemory = state.translate.rememberKey ? state.translate.apiKey : '';
   let translateInFlight = false;
   let lastTranslation = null; // { text, lang }
-  const TRANSLATE_STATES = ['translate-empty', 'translate-setup', 'translate-loading', 'translate-error', 'translate-result'];
+  const TRANSLATE_STATES = ['translate-empty', 'translate-loading', 'translate-error', 'translate-result'];
 
   function validateServerUrl(raw) {
     const value = String(raw || '').trim();
@@ -1126,50 +1126,6 @@
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
     if (url.search || url.hash) return null;
     return url.origin + url.pathname.replace(/\/+$/, '');
-  }
-
-  function renderTranslateSettings() {
-    $('lt-url').value = state.translate.serverUrl || '';
-    $('lt-key').value = translateKeyInMemory;
-    $('lt-remember').checked = !!state.translate.rememberKey;
-    $('lt-status').textContent = translateKeyInMemory
-      ? (state.translate.rememberKey ? 'Key remembered on this device.' : 'Key held in memory for this tab only.')
-      : 'No API key set.';
-  }
-
-  function saveTranslateSettings() {
-    const url = validateServerUrl($('lt-url').value);
-    if (!url) {
-      $('lt-status').textContent = 'Enter a valid http(s) server URL, e.g. https://libretranslate.com';
-      $('lt-url').focus();
-      return;
-    }
-    state.translate.serverUrl = url;
-    translateKeyInMemory = $('lt-key').value.trim();
-    state.translate.rememberKey = $('lt-remember').checked;
-    state.translate.apiKey = state.translate.rememberKey ? translateKeyInMemory : '';
-    saveState();
-    renderTranslateSettings();
-    toast('Translation settings saved.', 'success');
-    if (!$('translate-result').hidden) return;
-    showOnly(TRANSLATE_STATES, 'translate-empty');
-  }
-
-  function forgetTranslateKey() {
-    translateKeyInMemory = '';
-    state.translate.apiKey = '';
-    state.translate.rememberKey = false;
-    saveState();
-    renderTranslateSettings();
-    toast('API key forgotten.', 'info');
-  }
-
-  function toggleTranslateSettings(force) {
-    const panel = $('translate-settings');
-    const open = typeof force === 'boolean' ? force : panel.hidden;
-    panel.hidden = !open;
-    $('translate-settings-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open) $('lt-url').focus();
   }
 
   let translateAutoFilled = '';
@@ -1275,16 +1231,11 @@
   function handleTranslateError(err) {
     const code = err && err.code;
     const serverMessage = err && err.body && typeof err.body.error === 'string' ? err.body.error : '';
-    if (code === 'http' && (err.status === 400 || err.status === 401 || err.status === 403) && /key/i.test(serverMessage)) {
-      $('translate-setup').querySelector('p').textContent = 'LibreTranslate says: “' + serverMessage + '”, and the free MyMemory fallback also failed. Add a key in API settings, or try again shortly.';
-      showOnly(TRANSLATE_STATES, 'translate-setup');
-      return;
-    }
     let title = 'Translation failed', message = 'The translation server returned an unexpected response. Try again shortly.';
     if (code === 'offline') { title = 'You look offline'; message = 'Gengo can’t reach the translation server. Dictionary lookups and saved words still work when you’re back online.'; }
-    else if (code === 'timeout') { title = 'The translation server is slow'; message = 'The request timed out after ' + (API_TIMEOUT_MS / 1000) + ' seconds. Try again, or use a different server in API settings.'; }
+    else if (code === 'timeout') { title = 'The translation server is slow'; message = 'The request timed out after ' + (API_TIMEOUT_MS / 1000) + ' seconds. Try again in a moment.'; }
     else if (code === 'http' && err.status === 429) { title = 'Too many requests'; message = 'The server is rate-limiting you. Wait a moment and try again.'; }
-    else if (code === 'quota') { title = 'Daily free quota used up'; message = 'MyMemory’s free anonymous quota for today is exhausted. Add a LibreTranslate key in API settings, or try again tomorrow.'; }
+    else if (code === 'quota') { title = 'Daily free quota used up'; message = 'MyMemory’s free anonymous quota for today is exhausted. Try again tomorrow.'; }
     else if (code === 'http' && serverMessage) { message = 'Server message: “' + serverMessage + '”'; }
     $('translate-error-title').textContent = title;
     $('translate-error-message').textContent = message;
@@ -2538,7 +2489,6 @@
     if (name === 'words') renderMyWords();
     if (name === 'speak') renderSpeak();
     if (name === 'translate') {
-      renderTranslateSettings();
       prefillTranslate();
     }
     if (name === 'context' && state.lastSearch && lastContextQuery !== state.lastSearch.word && !contextInFlight) {
@@ -2747,10 +2697,6 @@
 
     // Translate
     $('translate-form').addEventListener('submit', function (e) { e.preventDefault(); translateText(); });
-    $('translate-settings-toggle').addEventListener('click', function () { toggleTranslateSettings(); });
-    $('translate-open-settings').addEventListener('click', function () { toggleTranslateSettings(true); });
-    $('lt-save').addEventListener('click', saveTranslateSettings);
-    $('lt-forget').addEventListener('click', forgetTranslateKey);
     document.querySelectorAll('.chip[data-fill]').forEach(function (chip) {
       chip.addEventListener('click', function () { fillTranslateInput(chip.dataset.fill); });
     });
@@ -2926,7 +2872,6 @@
     renderQuiz(false);
     renderMyWords();
     renderSpeak();
-    renderTranslateSettings();
   }
 
   function init() {

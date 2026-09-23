@@ -2155,7 +2155,8 @@
    *  the sprint pauses, a strike is recorded, and three strikes cancel the sprint (no XP). */
   const drill = { deck: [], idx: 0, flipped: false, reviewed: 0, built: false }; // flashcards shown on the focus screen
   let leaveCheck = null;       // debounce handle for blur → hasFocus re-check
-  let fullscreenByUs = false;  // we entered fullscreen, so leaving it counts as leaving
+  let fullscreenByUs = false;  // we entered fullscreen (so we know to exit it when the sprint ends)
+  let leaveGraceUntil = 0;     // ignore blur/visibility noise right after start/resume (fullscreen transition, focus moving)
 
   function timerRemaining() {
     const t = state.timer;
@@ -2169,6 +2170,7 @@
     t.endsAt = Date.now() + t.remainingMs;
     t.running = true;
     t.locked = true;
+    leaveGraceUntil = Date.now() + 3000;
     saveState();
     if (fresh) buildDrill();
     renderTimer();
@@ -2199,7 +2201,7 @@
   /** The learner switched tab/app, minimised, or left fullscreen while the sprint was running. */
   function onLeaveDuringSprint() {
     const t = state.timer;
-    if (!t.running) return;
+    if (!t.running || Date.now() < leaveGraceUntil) return;
     pauseTimer('left');
     t.strikes = Math.min(MAX_STRIKES, (t.strikes || 0) + 1);
     saveState();
@@ -2243,11 +2245,12 @@
     window.addEventListener('blur', function () {
       // blur also fires for focus moving into an iframe/devtools; confirm the document really lost focus
       window.clearTimeout(leaveCheck);
-      leaveCheck = window.setTimeout(function () { if (!document.hasFocus() || document.hidden) onLeaveDuringSprint(); }, 400);
+      leaveCheck = window.setTimeout(function () { if (!document.hasFocus() || document.hidden) onLeaveDuringSprint(); }, 1200);
     });
     window.addEventListener('focus', function () { window.clearTimeout(leaveCheck); });
     document.addEventListener('fullscreenchange', function () {
-      if (!document.fullscreenElement && fullscreenByUs) { fullscreenByUs = false; onLeaveDuringSprint(); }
+      // Esc out of fullscreen is not "leaving": the focus screen still covers the page and the sprint keeps running
+      if (!document.fullscreenElement) fullscreenByUs = false;
     });
     window.addEventListener('beforeunload', function (e) {
       if (state.timer.running) { e.preventDefault(); e.returnValue = ''; }

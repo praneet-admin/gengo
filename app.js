@@ -23,6 +23,7 @@
 
   const MINUTE = 60 * 1000;
   const TIMER_DURATION = 5 * MINUTE;
+  const MAX_STRIKES = 3;    // times a learner may leave the tab/app during a sprint before it is cancelled
 
   const XP = { save: 10, quiz: 5, sprint: 15 };
   const LEVELS = [0, 50, 120, 220, 350, 500, 700, 950, 1250, 1600]; // XP threshold per level
@@ -58,7 +59,9 @@
       remainingMs: TIMER_DURATION,
       running: false,
       completed: false,
-      rewardClaimed: false
+      rewardClaimed: false,
+      locked: false,          // focus screen is up (sprint started and not yet finished/abandoned)
+      strikes: 0              // times the learner left the tab/app during this sprint
     },
     translate: {
       serverUrl: DEFAULT_TRANSLATE_URL,
@@ -123,6 +126,8 @@
     if (SECTION_NAMES.indexOf(merged.prefs.section) === -1) merged.prefs.section = 'learn';
     ['endsAt', 'remainingMs'].forEach(function (k) { if (merged.timer[k] !== null && !Number.isFinite(merged.timer[k])) merged.timer[k] = k === 'endsAt' ? null : TIMER_DURATION; });
     if (merged.timer.remainingMs < 0 || merged.timer.remainingMs > TIMER_DURATION) merged.timer.remainingMs = TIMER_DURATION;
+    merged.timer.locked = merged.timer.locked === true && !merged.timer.completed;
+    if (!Number.isInteger(merged.timer.strikes) || merged.timer.strikes < 0 || merged.timer.strikes > MAX_STRIKES) merged.timer.strikes = 0;
     return merged;
   }
 
@@ -2146,6 +2151,12 @@
   }
 
   /* ---------- 15. Focus Sprint timer ---------- */
+  /** A page can't stop the learner switching tabs or apps, so leaving is detected instead:
+   *  the sprint pauses, a strike is recorded, and three strikes cancel the sprint (no XP). */
+  const drill = { deck: [], idx: 0, flipped: false, reviewed: 0, built: false }; // flashcards shown on the focus screen
+  let leaveCheck = null;       // debounce handle for blur → hasFocus re-check
+  let fullscreenByUs = false;  // we entered fullscreen, so leaving it counts as leaving
+
   function timerRemaining() {
     const t = state.timer;
     return t.running && t.endsAt ? Math.max(0, t.endsAt - Date.now()) : t.remainingMs;
@@ -2154,14 +2165,20 @@
   function startTimer() {
     const t = state.timer;
     if (t.running || t.completed) return;
+    const fresh = t.remainingMs >= TIMER_DURATION;
     t.endsAt = Date.now() + t.remainingMs;
     t.running = true;
+    t.locked = true;
     saveState();
+    if (fresh) buildDrill();
     renderTimer();
-    buddySay('Focus mode. I’ll be quiet.', 'think');
+    enterFullscreen();
+    buddySay(fresh ? 'Focus mode. Stay on this screen with me.' : 'Back to it. Eyes here.', 'think');
+    announce(fresh ? 'Focus sprint started. Leaving this tab pauses it.' : 'Sprint resumed.');
+    window.setTimeout(function () { const b = $('focus-pause'); if (t.running && b && !b.hidden) b.focus(); }, 50);
   }
 
-  function pauseTimer() {
+  function pauseTimer(reason) {
     const t = state.timer;
     if (!t.running) return;
     t.remainingMs = timerRemaining();
@@ -2169,12 +2186,85 @@
     t.endsAt = null;
     saveState();
     renderTimer();
+    if (!reason) { announce('Sprint paused.'); const b = $('focus-resume'); if (b) b.focus(); }
   }
 
   function resetTimer() {
     state.timer = cloneDefault(DEFAULT_STATE.timer);
     saveState();
     renderTimer();
+    exitFullscreen();
+  }
+
+  /** The learner switched tab/app, minimised, or left fullscreen while the sprint was running. */
+  function onLeaveDuringSprint() {
+    const t = state.timer;
+    if (!t.running) return;
+    pauseTimer('left');
+    t.strikes = Math.min(MAX_STRIKES, (t.strikes || 0) + 1);
+    saveState();
+    if (t.strikes >= MAX_STRIKES) {
+      abandonSprint('You left ' + MAX_STRIKES + ' times — sprint cancelled, no XP this time.');
+      return;
+    }
+    renderTimer();
+    const left = MAX_STRIKES - t.strikes;
+    toast('You left the sprint! Strike ' + t.strikes + ' of ' + MAX_STRIKES + '. Timer paused.', 'warn', 4200);
+    announce('You left the sprint. Strike ' + t.strikes + ' of ' + MAX_STRIKES + '. ' + (left === 1 ? 'One more and it is cancelled.' : left + ' strikes left.') + ' Timer paused.');
+    buddySay(left === 1 ? 'Last chance. One more and we lose it.' : 'Hey! Come back. That’s a strike.', 'sad', 3200);
+    window.setTimeout(function () { const b = $('focus-resume'); if (b && !b.hidden) b.focus(); }, 60);
+  }
+
+  function abandonSprint(message) {
+    resetTimer();
+    toast(message, 'warn', 4500);
+    announce(message);
+    buddySay('We’ll get it next time.', 'sad', 3000);
+  }
+
+  function enterFullscreen() {
+    const el = document.documentElement;
+    if (!el.requestFullscreen || document.fullscreenElement) return;
+    try {
+      const p = el.requestFullscreen({ navigationUI: 'hide' });
+      if (p && p.then) p.then(function () { fullscreenByUs = true; }).catch(function () { fullscreenByUs = false; });
+    } catch (e) { fullscreenByUs = false; }
+  }
+
+  function exitFullscreen() {
+    fullscreenByUs = false;
+    if (document.fullscreenElement && document.exitFullscreen) {
+      try { const p = document.exitFullscreen(); if (p && p.catch) p.catch(function () {}); } catch (e) { /* ignore */ }
+    }
+  }
+
+  function bindFocusLock() {
+    document.addEventListener('visibilitychange', function () { if (document.hidden) onLeaveDuringSprint(); });
+    window.addEventListener('blur', function () {
+      // blur also fires for focus moving into an iframe/devtools; confirm the document really lost focus
+      window.clearTimeout(leaveCheck);
+      leaveCheck = window.setTimeout(function () { if (!document.hasFocus() || document.hidden) onLeaveDuringSprint(); }, 400);
+    });
+    window.addEventListener('focus', function () { window.clearTimeout(leaveCheck); });
+    document.addEventListener('fullscreenchange', function () {
+      if (!document.fullscreenElement && fullscreenByUs) { fullscreenByUs = false; onLeaveDuringSprint(); }
+    });
+    window.addEventListener('beforeunload', function (e) {
+      if (state.timer.running) { e.preventDefault(); e.returnValue = ''; }
+    });
+    $('focus-pause').addEventListener('click', function () { pauseTimer(); });
+    $('focus-resume').addEventListener('click', function () { startTimer(); });
+    $('focus-quit').addEventListener('click', function () { abandonSprint('Sprint abandoned — no XP this time.'); });
+    $('drill-card').addEventListener('click', flipDrill);
+    $('drill-got').addEventListener('click', function () { nextDrill(true); });
+    $('drill-again').addEventListener('click', function () { nextDrill(false); });
+    document.addEventListener('keydown', function (e) {
+      if (!document.body.classList.contains('focus-lock') || !state.timer.running) return;
+      const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      if (e.code === 'Space' && document.activeElement !== $('drill-card') && !(document.activeElement && document.activeElement.classList.contains('btn'))) { e.preventDefault(); flipDrill(); }
+      else if (drill.flipped && (e.key === 'ArrowRight' || e.code === 'Digit1')) { e.preventDefault(); nextDrill(true); }
+      else if (drill.flipped && (e.key === 'ArrowLeft' || e.code === 'Digit2')) { e.preventDefault(); nextDrill(false); }
+    });
   }
 
   /** Called every tick and on load; completes the sprint and pays out exactly once. */
@@ -2185,15 +2275,18 @@
       t.endsAt = null;
       t.remainingMs = 0;
       t.completed = true;
+      t.locked = false;
       saveState();
+      exitFullscreen();
       if (!t.rewardClaimed) {
         t.rewardClaimed = true;
         todayStats().sprints += 1;
         saveState();
         awardXP(XP.sprint);
         recordActivity();
-        toast('Focus sprint complete! +' + XP.sprint + ' XP 🎉', 'celebrate', 4200);
-        announce('Focus sprint complete. ' + XP.sprint + ' XP earned.');
+        const cards = drill.reviewed ? ' · ' + drill.reviewed + ' card' + (drill.reviewed === 1 ? '' : 's') + ' reviewed' : '';
+        toast('Focus sprint complete! +' + XP.sprint + ' XP' + cards + ' 🎉', 'celebrate', 4800);
+        announce('Focus sprint complete. ' + XP.sprint + ' XP earned.' + (drill.reviewed ? ' You reviewed ' + drill.reviewed + ' flashcards.' : ''));
         confetti();
         sparkle($('timer-ring'), 12);
         buddySay('Five focused minutes. Respect.', 'cheer', 3000);
@@ -2223,6 +2316,8 @@
     else status.textContent = 'Ready when you are.';
     $('timer-display').setAttribute('aria-label', t.completed ? 'Sprint complete' : formatClock(remaining) + ' remaining');
 
+    renderFocusScreen(t, remaining, clock);
+
     const start = $('timer-start'), pause = $('timer-pause'), reset = $('timer-reset');
     if (t.completed) {
       start.hidden = false; start.textContent = 'Start another'; pause.hidden = true; reset.hidden = true;
@@ -2232,6 +2327,77 @@
       start.hidden = false; start.textContent = remaining < TIMER_DURATION ? 'Resume' : 'Start';
       pause.hidden = true; reset.hidden = remaining >= TIMER_DURATION;
     }
+  }
+
+  function renderFocusScreen(t, remaining, clock) {
+    const screen = $('focus-screen');
+    if (!screen) return;
+    const show = !!t.locked && !t.completed;
+    if (screen.hidden === show) {
+      screen.hidden = !show;
+      document.body.classList.toggle('focus-lock', show);
+      if (show) setMenu(false);
+    }
+    if (!show) return;
+    if (!drill.deck.length && !drill.built) buildDrill(); // e.g. sprint restored after a reload
+    $('focus-display').textContent = clock;
+    $('focus-ring').style.setProperty('--progress', String(Math.round(((TIMER_DURATION - remaining) / TIMER_DURATION) * 100)));
+    const strikes = t.strikes || 0;
+    const dots = $('focus-strikes');
+    dots.setAttribute('aria-label', 'Strikes: ' + strikes + ' of ' + MAX_STRIKES);
+    Array.prototype.forEach.call(dots.children, function (li, i) { li.classList.toggle('is-hit', i < strikes); });
+    $('focus-title').textContent = t.running ? (strikes ? 'Stay this time' : 'Stay with me') : 'Sprint paused';
+    let status;
+    if (t.running) status = strikes ? (MAX_STRIKES - strikes) + (MAX_STRIKES - strikes === 1 ? ' strike left. ' : ' strikes left. ') + 'Leaving again pauses the sprint.' : 'Leaving this tab or app pauses the sprint. Three strikes and it’s cancelled.';
+    else status = strikes ? 'You left the screen — strike ' + strikes + ' of ' + MAX_STRIKES + '. Resume when you’re ready to stay.' : 'Paused at ' + clock + '. Resume when you’re ready.';
+    if ($('focus-status').textContent !== status) $('focus-status').textContent = status;
+    $('focus-resume').hidden = t.running;
+    $('focus-pause').hidden = !t.running;
+    $('focus-buddy').classList.toggle('is-sad', !t.running && strikes > 0);
+    $('focus-buddy').classList.toggle('is-think', t.running);
+    renderDrill(t.running);
+  }
+
+  /* Flashcards on the focus screen: saved words first (shuffled), else the current word. */
+  function buildDrill() {
+    const cards = state.words.filter(function (w) { return w.word && w.definition; });
+    if (!cards.length && state.lastSearch && state.lastSearch.definition) cards.push(state.lastSearch);
+    drill.deck = shuffle(cards.slice());
+    drill.idx = 0; drill.flipped = false; drill.reviewed = 0; drill.built = true;
+  }
+
+  function currentCard() { return drill.deck.length ? drill.deck[drill.idx % drill.deck.length] : null; }
+
+  function renderDrill(active) {
+    const card = currentCard();
+    $('drill-empty').hidden = !!card;
+    $('drill-card').hidden = !card;
+    $('drill-actions').hidden = !card;
+    $('drill-count').textContent = drill.reviewed + ' reviewed';
+    if (!card) return;
+    const flipped = drill.flipped;
+    $('drill-kicker').textContent = flipped ? 'Meaning' : 'Word';
+    $('drill-face').textContent = flipped ? card.definition : card.word;
+    $('drill-face').classList.toggle('is-meaning', flipped);
+    $('drill-hint').textContent = flipped ? (card.example ? '“' + card.example + '”' : 'Did you know it?') : 'Tap to reveal the meaning';
+    $('drill-card').setAttribute('aria-label', (flipped ? 'Meaning: ' + card.definition : 'Word: ' + card.word) + '. Press to flip.');
+    $('drill-card').classList.toggle('is-flipped', flipped);
+    $('drill-card').disabled = !active;
+    $('drill-again').disabled = !active || !flipped;
+    $('drill-got').disabled = !active || !flipped;
+  }
+
+  function flipDrill() { if (!currentCard()) return; drill.flipped = !drill.flipped; renderDrill(state.timer.running); }
+
+  function nextDrill(gotIt) {
+    const card = currentCard();
+    if (!card) return;
+    drill.reviewed += 1;
+    if (!gotIt) drill.deck.push(card); // comes back around later in the sprint
+    drill.idx += 1; drill.flipped = false;
+    if (gotIt) sparkle($('drill-card'), 6);
+    renderDrill(state.timer.running);
+    announce(gotIt ? 'Got it. Next word: ' + currentCard().word : 'Marked again. Next word: ' + currentCard().word);
   }
 
   /* ---------- 16. Navigation, shared UI, init & tickers ---------- */
@@ -2336,7 +2502,7 @@
   function onGlobalKey(e) {
     const t = e.target;
     const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-    const dialogOpen = !!document.querySelector('dialog[open]');
+    const dialogOpen = !!document.querySelector('dialog[open]') || document.body.classList.contains('focus-lock');
     const digit = /^(Digit|Numpad)([1-6])$/.exec(e.code || '');
     if (e.altKey && !e.ctrlKey && !e.metaKey && digit) {
       e.preventDefault();
@@ -2595,6 +2761,7 @@
     $('timer-start').addEventListener('click', function () { if (state.timer.completed) resetTimer(); startTimer(); });
     $('timer-pause').addEventListener('click', pauseTimer);
     $('timer-reset').addEventListener('click', resetTimer);
+    bindFocusLock();
 
     // Navigation
     SECTIONS.forEach(function (s) {

@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=55">
+  <link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -500,7 +500,7 @@
           <h2 id="timer-heading">Focus Sprint</h2>
           <span class="xp-pill">+15 XP</span>
         </div>
-        <p class="side-sub" id="timer-sub">Five focused minutes.</p>
+        <p class="side-sub" id="timer-sub">Five focused minutes — leaving the tab pauses it.</p>
         <div class="timer-ring" id="timer-ring" style="--progress:0">
           <div class="timer-display" id="timer-display" role="timer" aria-live="off" aria-atomic="true">05:00</div>
         </div>
@@ -547,6 +547,39 @@
         </div>
       </section>
     </aside>
+  </div>
+
+  <!-- Focus lock: shown while a sprint is running; leaving the tab/app pauses the sprint -->
+  <div class="focus-screen" id="focus-screen" hidden role="dialog" aria-modal="true" aria-labelledby="focus-title" aria-describedby="focus-status">
+    <div class="focus-inner">
+      <img class="bunny bunny-img focus-bunny" id="focus-buddy" src="assets/bunny-512.png" alt="" width="140" height="140">
+      <p class="kicker focus-kicker">Focus Sprint</p>
+      <h2 id="focus-title" class="focus-title">Stay with me</h2>
+      <div class="timer-ring focus-ring" id="focus-ring" style="--progress:0">
+        <div class="timer-display focus-display" id="focus-display" aria-hidden="true">05:00</div>
+      </div>
+      <p class="focus-status" id="focus-status" role="status" aria-live="polite">Leaving this tab or app pauses the sprint. Three strikes and it’s cancelled.</p>
+      <ol class="strikes" id="focus-strikes" aria-label="Strikes: 0 of 3"><li></li><li></li><li></li></ol>
+
+      <section class="drill" id="drill" aria-labelledby="drill-heading">
+        <div class="drill-head"><h3 id="drill-heading">Flashcard drill</h3><span class="drill-count" id="drill-count">0 reviewed</span></div>
+        <button class="drill-card" id="drill-card" type="button" aria-describedby="drill-hint">
+          <span class="drill-kicker" id="drill-kicker">Word</span>
+          <span class="drill-face" id="drill-face">—</span>
+          <span class="drill-hint" id="drill-hint">Tap to reveal the meaning</span>
+        </button>
+        <div class="drill-actions" id="drill-actions">
+          <button class="btn btn-secondary" type="button" id="drill-again">Again</button>
+          <button class="btn btn-lime" type="button" id="drill-got">Got it</button>
+        </div>
+        <p class="drill-empty" id="drill-empty" hidden>Save a few words in Learn and they’ll show up here to drill while you focus.</p>
+      </section>
+      <div class="focus-actions">
+        <button class="btn btn-lime btn-lg" type="button" id="focus-resume" hidden>Resume sprint</button>
+        <button class="btn btn-secondary" type="button" id="focus-pause">Pause</button>
+        <button class="btn btn-ghost focus-quit" type="button" id="focus-quit">Give up</button>
+      </div>
+    </div>
   </div>
 
   <div class="sr-only" id="sr-announcer" aria-live="polite" aria-atomic="true"></div>
@@ -625,6 +658,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=54"></script>
+  <script src="app.js?v=55"></script>
 </body>
 </html>

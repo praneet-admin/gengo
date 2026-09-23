@@ -1532,3 +1532,78 @@ html { scroll-padding-top: 120px; }
 }
 .brand-name { font-size: 2.4rem; }
 @media (max-width: 1100px) { .brand-name { font-size: 1.6rem; } }
+
+/* ---------- 39. Focus lock screen (sprint running) ---------- */
+.focus-screen { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 1.25rem; overflow: auto;
+  background: radial-gradient(120% 90% at 50% 0%, #5a2fd0 0%, var(--brand-900) 55%, #1d1054 100%); color: #fff; }
+.focus-screen[hidden] { display: none; }
+body.focus-lock { overflow: hidden; }
+body.focus-lock .floaters, body.focus-lock .blobs { display: none; }
+.focus-inner { display: grid; justify-items: center; text-align: center; gap: 0.75rem; width: min(100%, 460px); animation: fade-up 400ms var(--bounce) both; }
+.focus-bunny { width: 140px; height: 140px; filter: drop-shadow(0 8px 0 rgba(0,0,0,0.25)); animation: bunny-breathe 3.4s ease-in-out infinite; }
+.focus-kicker { color: var(--accent-500); letter-spacing: 0.12em; margin: 0; }
+.focus-title { font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 900; margin: 0; line-height: 1.1; }
+.focus-ring { --size: 220px; margin: 0.5rem 0;
+  background: radial-gradient(closest-side, #2a1780 68%, transparent 70% 100%), conic-gradient(var(--accent-500) calc(var(--pct, var(--progress)) * 1%), rgba(255,255,255,0.18) 0);
+  box-shadow: 0 0 0 10px rgba(255,255,255,0.06), 0 0 60px -10px var(--accent-500); }
+.focus-display { color: #fff; font-size: 3rem; }
+body.focus-lock .timer-card.is-running .focus-ring { animation: breathe 3s ease-in-out infinite; }
+.focus-status { max-width: 40ch; margin: 0; font-weight: 700; color: rgba(255,255,255,0.88); line-height: 1.4; }
+.strikes { display: flex; gap: 0.6rem; list-style: none; padding: 0; margin: 0.25rem 0; }
+.strikes li { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: transparent; transition: background 200ms var(--ease), transform 200ms var(--bounce); }
+.strikes li.is-hit { background: var(--danger-500); border-color: var(--danger-500); transform: scale(1.15); box-shadow: 0 0 0 4px rgba(201,36,90,0.25); }
+.focus-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-top: 0.5rem; }
+.focus-screen .btn-secondary { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.35); box-shadow: 0 4px 0 rgba(0,0,0,0.25); }
+.focus-screen .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+.focus-quit { color: rgba(255,255,255,0.8); }
+.focus-quit:hover, .focus-quit:focus-visible { color: #fff; background: rgba(255,255,255,0.1); }
+.focus-screen .btn:focus-visible { outline: 3px solid var(--accent-500); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .focus-bunny { width: 104px; height: 104px; }
+  .focus-ring { --size: 180px; }
+  .focus-display { font-size: 2.4rem; }
+  .focus-actions .btn { flex: 1 1 100%; }
+}
+@media (max-height: 640px) { .focus-bunny { display: none; } .focus-ring { --size: 150px; } .focus-display { font-size: 2.1rem; } }
+body.reduce-motion .focus-inner, body.reduce-motion .focus-bunny, body.reduce-motion .focus-ring { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .focus-inner, .focus-bunny, .focus-ring { animation: none !important; } }
+@media (forced-colors: active) { .focus-screen { background: Canvas; color: CanvasText; } .strikes li.is-hit { background: Highlight; border-color: Highlight; } }
+
+/* ---------- 40. Flashcard drill on the focus screen ---------- */
+.focus-inner { width: min(100%, 520px); gap: 0.6rem; }
+.focus-ring { --size: 150px; margin: 0.2rem 0; }
+.focus-display { font-size: 2.2rem; }
+.focus-bunny { width: 96px; height: 96px; }
+.drill { width: 100%; display: grid; gap: 0.6rem; margin-top: 0.4rem; text-align: left; }
+.drill-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.drill-head h3 { margin: 0; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-500); }
+.drill-count { font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.75); font-variant-numeric: tabular-nums; }
+.drill-card { display: grid; gap: 0.35rem; width: 100%; min-height: 150px; padding: 1.1rem 1.2rem; border: 0; border-radius: var(--radius-lg);
+  background: #fff; color: var(--ink-900); text-align: left; cursor: pointer; font: inherit;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.28), 0 20px 40px -20px rgba(0,0,0,0.6); transition: transform 160ms var(--bounce), background 200ms var(--ease); }
+.drill-card:hover:not(:disabled) { transform: translateY(-2px); }
+.drill-card:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 4px 0 rgba(0,0,0,0.28); }
+.drill-card:disabled { cursor: default; opacity: 0.7; }
+.drill-card.is-flipped { background: var(--accent-100, #fff5c2); }
+.drill-card:focus-visible { outline: 3px solid var(--accent-500); outline-offset: 4px; }
+.drill-kicker { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-700); }
+.drill-face { font-size: 1.9rem; font-weight: 900; line-height: 1.15; color: var(--brand-900); overflow-wrap: anywhere; }
+.drill-face.is-meaning { font-size: 1.15rem; font-weight: 800; color: var(--ink-900); }
+.drill-hint { font-size: 0.85rem; font-weight: 700; color: var(--ink-600, #5a5470); font-style: italic; }
+.drill-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.drill-actions .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+.drill-empty { margin: 0; text-align: center; color: rgba(255,255,255,0.8); font-weight: 700; }
+.focus-actions { margin-top: 0.2rem; }
+@media (min-width: 900px) and (min-height: 700px) {
+  .focus-inner { width: min(100%, 880px); grid-template-columns: 300px 1fr; column-gap: 2.5rem; justify-items: stretch; align-items: center; }
+  .focus-inner > * { grid-column: 1; justify-self: center; }
+  .focus-inner .drill { grid-column: 2; grid-row: 1 / span 8; align-self: center; margin: 0; }
+  .focus-bunny { width: 120px; height: 120px; }
+  .focus-ring { --size: 190px; }
+  .focus-display { font-size: 2.6rem; }
+}
+@media (max-width: 640px) { .focus-screen { padding: 1rem 16px; align-items: start; } .drill-card { min-height: 130px; padding: 0.9rem 1rem; } .drill-face { font-size: 1.6rem; } .focus-actions .btn { flex: 1 1 auto; } }
+@media (forced-colors: active) { .drill-card { border: 2px solid ButtonText; } }
+/* focus screen ghost button: transparent on indigo, never a white block */
+.focus-screen .btn-ghost, .focus-screen .focus-quit { background: transparent; color: rgba(255,255,255,0.85); border: 2px solid rgba(255,255,255,0.35); box-shadow: none; }
+.focus-screen .btn-ghost:hover, .focus-screen .focus-quit:hover, .focus-screen .focus-quit:focus-visible { background: rgba(255,255,255,0.12); color: #fff; }

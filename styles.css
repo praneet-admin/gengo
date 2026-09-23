@@ -1607,3 +1607,12 @@ body.reduce-motion .focus-inner, body.reduce-motion .focus-bunny, body.reduce-mo
 /* focus screen ghost button: transparent on indigo, never a white block */
 .focus-screen .btn-ghost, .focus-screen .focus-quit { background: transparent; color: rgba(255,255,255,0.85); border: 2px solid rgba(255,255,255,0.35); box-shadow: none; }
 .focus-screen .btn-ghost:hover, .focus-screen .focus-quit:hover, .focus-screen .focus-quit:focus-visible { background: rgba(255,255,255,0.12); color: #fff; }
+
+/* ---------- 41. Purpose of the sprint: word mastery + Streak Shields ---------- */
+.mastery { font-size: 0.85rem; letter-spacing: 0.08em; color: var(--accent-600, #d9a800); font-weight: 900; margin-left: auto; white-space: nowrap; }
+.mastery.is-mastered { color: var(--brand-700); background: var(--accent-100, #fff5c2); border-radius: 999px; padding: 0.05rem 0.5rem; }
+.word-item-head { flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.shield-note { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--ink-600, #5a5470); }
+.shield-note.has-shield { color: var(--brand-800); }
+.week-day.is-shield .week-dot { background: var(--brand-050); border-color: var(--brand-500); font-size: 0.8rem; }
+#timer-sub strong { color: var(--brand-800); }

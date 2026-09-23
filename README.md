@@ -89,6 +89,12 @@ A web page cannot stop someone switching tabs or apps, so the sprint makes leavi
 - The screen is productive: a **flashcard drill** cycles through the learner's saved words (shuffled; falls back to the current word). Tap/Space flips word ↔ meaning, "Got it" moves on, "Again" puts the card back in the deck. Cards reviewed are reported when the sprint completes.
 - Strikes and the lock survive a reload (stored in `timer.locked` / `timer.strikes` under `gengo-v1`); the drill deck is rebuilt on a fresh start.
 
+### Why do a sprint? (mastery & Streak Shields)
+
+- **Word mastery (★★★)** is earned *only* inside a Focus Sprint: each "Got it" on a word's flashcard raises its mastery by one (one step per word per sprint; "Again" lowers it). Three stars = mastered, shown in My Words and on the card during the drill. Each "Got it" also pays +2 XP (capped at 20 XP per sprint).
+- **Streak Shield 🛡**: finishing a sprint banks a shield (max 2). If a day is missed, a shield is spent automatically on the next visit to cover that day, so the streak survives. Shielded days show a 🛡 in the week strip; shields are shown on the Today card.
+- Stored under `gengo-v1`: `words[].mastery` (0–3), `shields`, `shieldDays`.
+
 ## Accessibility
 
 Built so that people with disabilities can use every feature, not just look at it.

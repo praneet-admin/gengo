@@ -25,7 +25,10 @@
   const TIMER_DURATION = 5 * MINUTE;
   const MAX_STRIKES = 3;    // times a learner may leave the tab/app during a sprint before it is cancelled
 
-  const XP = { save: 10, quiz: 5, sprint: 15 };
+  const XP = { save: 10, quiz: 5, sprint: 15, drill: 2 }; // drill XP only during a Focus Sprint
+  const MAX_SHIELDS = 2;    // Streak Shields a learner can bank
+  const MASTERY_MAX = 3;    // "Got it" in three sprints = mastered
+  const DRILL_XP_CAP = 20;  // max drill XP per sprint
   const LEVELS = [0, 50, 120, 220, 350, 500, 700, 950, 1250, 1600]; // XP threshold per level
   const MILESTONES = [3, 7, 14, 30, 60, 100];
 
@@ -50,6 +53,8 @@
     xp: 0,
     activity: {},             // { 'YYYY-MM-DD': count }
     dailyGoal: 3,
+    shields: 0,               // Streak Shields earned by finishing Focus Sprints (max MAX_SHIELDS)
+    shieldDays: [],           // 'YYYY-MM-DD' days a shield bridged so the streak survived
     goalCelebratedOn: null,   // date key of the last goal celebration
     lastSearch: null,         // full entry from the last successful lookup
     quiz: { lastWordId: null },
@@ -127,6 +132,8 @@
     ['endsAt', 'remainingMs'].forEach(function (k) { if (merged.timer[k] !== null && !Number.isFinite(merged.timer[k])) merged.timer[k] = k === 'endsAt' ? null : TIMER_DURATION; });
     if (merged.timer.remainingMs < 0 || merged.timer.remainingMs > TIMER_DURATION) merged.timer.remainingMs = TIMER_DURATION;
     merged.timer.locked = merged.timer.locked === true && !merged.timer.completed;
+    if (!Number.isInteger(merged.shields) || merged.shields < 0 || merged.shields > MAX_SHIELDS) merged.shields = 0;
+    merged.shieldDays = Array.isArray(merged.shieldDays) ? merged.shieldDays.filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); }).slice(-60) : [];
     if (!Number.isInteger(merged.timer.strikes) || merged.timer.strikes < 0 || merged.timer.strikes > MAX_STRIKES) merged.timer.strikes = 0;
     return merged;
   }
@@ -164,7 +171,8 @@
       synonyms: stringList(w.synonyms, 8),
       antonyms: stringList(w.antonyms, 8),
       source: typeof w.source === 'string' ? w.source : '',
-      savedAt: typeof w.savedAt === 'number' ? w.savedAt : Date.now()
+      savedAt: typeof w.savedAt === 'number' ? w.savedAt : Date.now(),
+      mastery: Number.isInteger(w.mastery) && w.mastery >= 0 && w.mastery <= MASTERY_MAX ? w.mastery : 0
     };
   }
 
@@ -229,23 +237,26 @@
   }
 
   /** Streaks are derived from activity history using local calendar dates only. */
+  function dayActive(key) { return !!state.activity[key] || state.shieldDays.indexOf(key) !== -1; }
+
   function computeStreaks() {
     const today = todayKey();
     const yesterday = shiftDays(today, -1);
     let anchor = null;
-    if (state.activity[today]) anchor = today;
-    else if (state.activity[yesterday]) anchor = yesterday;
+    if (dayActive(today)) anchor = today;
+    else if (dayActive(yesterday)) anchor = yesterday;
 
     let current = 0;
     if (anchor) {
       let cursor = anchor;
-      while (state.activity[cursor]) {
+      while (dayActive(cursor)) {
         current += 1;
         cursor = shiftDays(cursor, -1);
       }
     }
 
-    const keys = Object.keys(state.activity).filter(function (k) { return state.activity[k] > 0; }).sort();
+    const keys = Object.keys(state.activity).filter(function (k) { return state.activity[k] > 0; }).concat(state.shieldDays)
+      .filter(function (k, i, arr) { return arr.indexOf(k) === i; }).sort();
     let longest = 0, run = 0, prev = null;
     keys.forEach(function (k) {
       run = prev && shiftDays(prev, 1) === k ? run + 1 : 1;
@@ -253,6 +264,20 @@
       prev = k;
     });
     return { current: current, longest: Math.max(longest, current) };
+  }
+
+  /** On load: if yesterday was missed but the streak was alive before it, spend a Streak Shield to bridge it. */
+  function protectStreak() {
+    const yesterday = shiftDays(todayKey(), -1);
+    const dayBefore = shiftDays(yesterday, -1);
+    if (state.shields > 0 && !dayActive(yesterday) && dayActive(dayBefore) && !state.activity[todayKey()]) {
+      state.shields -= 1;
+      state.shieldDays.push(yesterday);
+      saveState();
+      toast('🛡 Streak Shield used — yesterday is covered, your ' + computeStreaks().current + '-day streak lives on.', 'celebrate', 5200);
+      announce('A Streak Shield covered yesterday. Your streak continues.');
+      buddySay('Shield up! I saved your streak.', 'cheer', 3200);
+    }
   }
 
   function todayProgress() {
@@ -993,7 +1018,7 @@
     $('clear-all').hidden = !words.length;
     $('words-count').textContent = words.length === 0
       ? 'No words saved yet'
-      : words.length + ' word' + (words.length === 1 ? '' : 's') + ' saved' + (filter ? ' · showing ' + visible.length : '') + (words.length < 4 ? ' · quiz unlocks at 4' : '');
+      : words.length + ' word' + (words.length === 1 ? '' : 's') + ' saved' + ' · ' + words.filter(function (w) { return w.mastery >= MASTERY_MAX; }).length + ' mastered' + (filter ? ' · showing ' + visible.length : '') + (words.length < 4 ? ' · quiz unlocks at 4' : '');
     const badge = $('nav-words-badge');
     badge.textContent = String(words.length);
     badge.setAttribute('aria-label', words.length + ' saved');
@@ -1023,6 +1048,12 @@
         pos.textContent = w.partOfSpeech;
         head.appendChild(pos);
       }
+      const stars = document.createElement('span');
+      stars.className = 'mastery' + (w.mastery >= MASTERY_MAX ? ' is-mastered' : '');
+      stars.textContent = '★'.repeat(w.mastery) + '☆'.repeat(MASTERY_MAX - w.mastery);
+      stars.setAttribute('aria-label', w.mastery >= MASTERY_MAX ? 'Mastered' : 'Mastery ' + w.mastery + ' of ' + MASTERY_MAX + ' — raise it in a Focus Sprint');
+      stars.title = w.mastery >= MASTERY_MAX ? 'Mastered in Focus Sprints' : 'Mastery ' + w.mastery + '/' + MASTERY_MAX + ' — “Got it” during a Focus Sprint raises it';
+      head.appendChild(stars);
 
       const def = document.createElement('p');
       def.className = 'word-item-def';
@@ -2153,7 +2184,7 @@
   /* ---------- 15. Focus Sprint timer ---------- */
   /** A page can't stop the learner switching tabs or apps, so leaving is detected instead:
    *  the sprint pauses, a strike is recorded, and three strikes cancel the sprint (no XP). */
-  const drill = { deck: [], idx: 0, flipped: false, reviewed: 0, built: false }; // flashcards shown on the focus screen
+  const drill = { deck: [], idx: 0, flipped: false, reviewed: 0, built: false, xp: 0, mastered: [] }; // flashcards shown on the focus screen
   let leaveCheck = null;       // debounce handle for blur → hasFocus re-check
   let fullscreenByUs = false;  // we entered fullscreen (so we know to exit it when the sprint ends)
   let leaveGraceUntil = 0;     // ignore blur/visibility noise right after start/resume (fullscreen transition, focus moving)
@@ -2288,8 +2319,11 @@
         awardXP(XP.sprint);
         recordActivity();
         const cards = drill.reviewed ? ' · ' + drill.reviewed + ' card' + (drill.reviewed === 1 ? '' : 's') + ' reviewed' : '';
-        toast('Focus sprint complete! +' + XP.sprint + ' XP' + cards + ' 🎉', 'celebrate', 4800);
-        announce('Focus sprint complete. ' + XP.sprint + ' XP earned.' + (drill.reviewed ? ' You reviewed ' + drill.reviewed + ' flashcards.' : ''));
+        let shieldNote = '';
+        if (state.shields < MAX_SHIELDS) { state.shields += 1; saveState(); shieldNote = ' · 🛡 Streak Shield earned'; }
+        toast('Focus sprint complete! +' + XP.sprint + ' XP' + cards + shieldNote + ' 🎉', 'celebrate', 5200);
+        announce('Focus sprint complete. ' + XP.sprint + ' XP earned.' + (drill.reviewed ? ' You reviewed ' + drill.reviewed + ' flashcards.' : '') + (shieldNote ? ' You earned a Streak Shield.' : ''));
+        renderHabit();
         confetti();
         sparkle($('timer-ring'), 12);
         buddySay('Five focused minutes. Respect.', 'cheer', 3000);
@@ -2366,8 +2400,10 @@
     const cards = state.words.filter(function (w) { return w.word && w.definition; });
     if (!cards.length && state.lastSearch && state.lastSearch.definition) cards.push(state.lastSearch);
     drill.deck = shuffle(cards.slice());
-    drill.idx = 0; drill.flipped = false; drill.reviewed = 0; drill.built = true;
+    drill.idx = 0; drill.flipped = false; drill.reviewed = 0; drill.built = true; drill.xp = 0; drill.mastered = [];
   }
+
+  drill.masteredIds = function () { return new Set(drill.mastered); };
 
   function currentCard() { return drill.deck.length ? drill.deck[drill.idx % drill.deck.length] : null; }
 
@@ -2376,10 +2412,12 @@
     $('drill-empty').hidden = !!card;
     $('drill-card').hidden = !card;
     $('drill-actions').hidden = !card;
-    $('drill-count').textContent = drill.reviewed + ' reviewed';
+    $('drill-count').textContent = drill.reviewed + ' reviewed' + (drill.xp ? ' · +' + drill.xp + ' XP' : '');
     if (!card) return;
     const flipped = drill.flipped;
-    $('drill-kicker').textContent = flipped ? 'Meaning' : 'Word';
+    const saved = state.words.find(function (w) { return w.id === card.id; });
+    const stars = saved ? '★'.repeat(saved.mastery) + '☆'.repeat(MASTERY_MAX - saved.mastery) : '';
+    $('drill-kicker').textContent = (flipped ? 'Meaning' : 'Word') + (stars ? '  ' + stars : '');
     $('drill-face').textContent = flipped ? card.definition : card.word;
     $('drill-face').classList.toggle('is-meaning', flipped);
     $('drill-hint').textContent = flipped ? (card.example ? '“' + card.example + '”' : 'Did you know it?') : 'Tap to reveal the meaning';
@@ -2396,11 +2434,26 @@
     const card = currentCard();
     if (!card) return;
     drill.reviewed += 1;
+    const saved = state.words.find(function (w) { return w.id === card.id; });
+    let note = '';
+    if (saved) {
+      if (gotIt && !drill.masteredIds().has(saved.id) && saved.mastery < MASTERY_MAX) {
+        saved.mastery += 1;
+        drill.mastered.push(saved.id); // one mastery step per word per sprint
+        if (saved.mastery === MASTERY_MAX) { note = ' ' + saved.word + ' mastered! ★★★'; toast('★ ' + saved.word + ' mastered!', 'celebrate', 3200); }
+        else note = ' Mastery ' + saved.mastery + ' of ' + MASTERY_MAX + '.';
+      } else if (!gotIt && saved.mastery > 0) {
+        saved.mastery -= 1;
+        note = ' Mastery back to ' + saved.mastery + '.';
+      }
+      saveState();
+    }
+    if (gotIt && drill.xp < DRILL_XP_CAP) { drill.xp += XP.drill; awardXP(XP.drill); }
     if (!gotIt) drill.deck.push(card); // comes back around later in the sprint
     drill.idx += 1; drill.flipped = false;
     if (gotIt) sparkle($('drill-card'), 6);
     renderDrill(state.timer.running);
-    announce(gotIt ? 'Got it. Next word: ' + currentCard().word : 'Marked again. Next word: ' + currentCard().word);
+    announce((gotIt ? 'Got it.' : 'Marked again.') + note + ' Next word: ' + currentCard().word);
   }
 
   /* ---------- 16. Navigation, shared UI, init & tickers ---------- */
@@ -2622,19 +2675,27 @@
     for (let i = 6; i >= 0; i--) {
       const key = shiftDays(today, -i);
       const count = state.activity[key] || 0;
+      const shielded = !count && state.shieldDays.indexOf(key) !== -1;
       const date = keyToDate(key);
       const li = document.createElement('li');
-      li.className = 'week-day' + (count ? ' is-active' : '') + (i === 0 ? ' is-today' : '');
+      li.className = 'week-day' + (count ? ' is-active' : '') + (shielded ? ' is-shield' : '') + (i === 0 ? ' is-today' : '');
       const dot = document.createElement('span');
       dot.className = 'week-dot';
-      dot.textContent = count ? String(count) : '·';
+      dot.textContent = count ? String(count) : (shielded ? '🛡' : '·');
       const label = document.createElement('span');
       label.className = 'week-label';
       label.textContent = date.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2);
-      li.setAttribute('aria-label', (i === 0 ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + count + ' activit' + (count === 1 ? 'y' : 'ies'));
+      li.setAttribute('aria-label', (i === 0 ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' })) + ': ' + (shielded ? 'covered by a Streak Shield' : count + ' activit' + (count === 1 ? 'y' : 'ies')));
       li.appendChild(dot);
       li.appendChild(label);
       strip.appendChild(li);
+    }
+
+    const shieldEl = $('shield-note');
+    if (shieldEl) {
+      const n = state.shields;
+      shieldEl.textContent = n ? '🛡 ' + n + ' Streak Shield' + (n === 1 ? '' : 's') + ' banked — a missed day won’t break your streak.' : '🛡 No Streak Shield. Finish a Focus Sprint to earn one.';
+      shieldEl.classList.toggle('has-shield', n > 0);
     }
 
     const progress = todayProgress();
@@ -2876,6 +2937,7 @@
       renderResult(normalizeWord(state.lastSearch));
       $('context-input').placeholder = 'Defaults to “' + state.lastSearch.word + '”';
     }
+    protectStreak();
     tickTimer(); // resolves a sprint that finished while the page was closed
     renderAll();
     showSection(state.prefs.section);

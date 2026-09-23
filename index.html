@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=56">
+  <link rel="stylesheet" href="styles.css?v=57">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -500,7 +500,7 @@
           <h2 id="timer-heading">Focus Sprint</h2>
           <span class="xp-pill">+15 XP</span>
         </div>
-        <p class="side-sub" id="timer-sub">Five focused minutes — leaving the tab pauses it.</p>
+        <p class="side-sub" id="timer-sub">Five minutes, no distractions. The only place words get <strong>mastered</strong> — and where you earn a <strong>Streak Shield</strong>.</p>
         <div class="timer-ring" id="timer-ring" style="--progress:0">
           <div class="timer-display" id="timer-display" role="timer" aria-live="off" aria-atomic="true">05:00</div>
         </div>
@@ -524,6 +524,7 @@
           <div class="node is-goal" style="--n:2"><span class="node-face" aria-hidden="true">★</span></div>
         </div>
         <p class="goal-note" id="goal-note">3 activities a day keep the streak alive.</p>
+        <p class="shield-note" id="shield-note">🛡 No Streak Shield. Finish a Focus Sprint to earn one.</p>
         <ol class="week-strip" id="week-strip" aria-label="Activity over the last seven days"></ol>
         <div class="habit-grid">
           <div class="habit-stat habit-flame">
@@ -562,7 +563,7 @@
       <ol class="strikes" id="focus-strikes" aria-label="Strikes: 0 of 3"><li></li><li></li><li></li></ol>
 
       <section class="drill" id="drill" aria-labelledby="drill-heading">
-        <div class="drill-head"><h3 id="drill-heading">Flashcard drill</h3><span class="drill-count" id="drill-count">0 reviewed</span></div>
+        <div class="drill-head"><h3 id="drill-heading">Master your words</h3><span class="drill-count" id="drill-count">0 reviewed</span></div>
         <button class="drill-card" id="drill-card" type="button" aria-describedby="drill-hint">
           <span class="drill-kicker" id="drill-kicker">Word</span>
           <span class="drill-face" id="drill-face">—</span>
@@ -572,7 +573,7 @@
           <button class="btn btn-secondary" type="button" id="drill-again">Again</button>
           <button class="btn btn-lime" type="button" id="drill-got">Got it</button>
         </div>
-        <p class="drill-empty" id="drill-empty" hidden>Save a few words in Learn and they’ll show up here to drill while you focus.</p>
+        <p class="drill-empty" id="drill-empty" hidden>Save a few words in Learn — this is where they get mastered.</p>
       </section>
       <div class="focus-actions">
         <button class="btn btn-lime btn-lg" type="button" id="focus-resume" hidden>Resume sprint</button>
@@ -658,6 +659,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=56"></script>
+  <script src="app.js?v=57"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 
 **Live app:** https://praneet-admin.github.io/gengo/ · **Source:** https://github.com/praneet-admin/gengo
 
+**Interface guide:** see [UI-UX.md](UI-UX.md) for the design system, layouts, every screen and the UX flows (with screenshots).
+
 **Gengo** (from the Japanese 言語, "language") is a single-page vocabulary trainer for English learners. It helps you discover useful words, hear and say them, translate them, read them in real context, save them, and test yourself through short daily sessions built around quizzes, a five-minute focus timer, XP, daily goals, and streaks.
 
 > Note: the flashcard Review / spaced-repetition section from the original brief was removed at the author's request. Saved words live in **My Words** and feed the quiz.

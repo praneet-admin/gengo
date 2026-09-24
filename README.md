@@ -99,7 +99,7 @@ A web page cannot stop someone switching tabs or apps, so the sprint makes leavi
 
 ### First-run tour
 
-On first launch (no `prefs.onboarded` flag in `gengo-v1`) Gen runs a 7-step guided tour: a welcome card, then spotlight coach-marks (search, save/chips, navigation — the ☰ button on small screens — Focus Sprint, Today card, header stats). Implemented without a library: a fixed `.tour-spot` element whose huge `box-shadow` dims everything except the target, plus a positioned card that flips above/below/beside the target (pinned to the bottom on phones). Keyboard: →/← step, Esc skips, focus is trapped in the card; every step is announced to screen readers. Replay from the `?` shortcuts dialog or `Gengo.tour()`.
+On first launch (no `prefs.onboarded` flag in `gengo-v1`) Gen runs a 7-step guided tour: a welcome card, then spotlight coach-marks (search, save/chips, navigation — the ☰ button on small screens — Focus Sprint, Today card, header stats). Implemented without a library: a fixed `.tour-spot` element whose huge `box-shadow` dims everything except the target, plus a positioned card that flips above/below/beside the target (pinned to the bottom on phones). Keyboard: →/← step, Esc skips, focus is trapped in the card; every step is announced to screen readers. The tour includes an accessibility step (display switches on desktop; screen-reader/keyboard/system-settings note on phones). An **Instructions** dialog (`#help-dialog`) is reachable from the yellow **Help** header button on desktop and the “How to use Gengo” row at the bottom of the ☰ drawer on small screens; it links to the tour and the shortcuts sheet. Replay the tour from there, from the `?` sheet, or with `Gengo.tour()`.
 
 ## Accessibility
 

@@ -49,7 +49,7 @@ Everything works on phone, tablet and laptop; nothing needs a login.
 
 ## 2. Getting started in 60 seconds
 
-The first time you open Gengo, **Gen offers a 30-second tour** — six spotlight steps that point out the search box, saving, the six sections, the Focus Sprint, your daily goal and the header stats. Take it or skip it; you can replay it any time from the **?** shortcuts sheet → *Replay the welcome tour*.
+The first time you open Gengo, **Gen offers a 30-second tour** — six spotlight steps that point out the search box, saving, the six sections, the Focus Sprint, your daily goal and the header stats. The tour also covers the accessibility switches. Take it or skip it; you can get **instructions any time** from the yellow **Help** button in the header (laptop) or **☰ → How to use Gengo** (phone/tablet) — that dialog also offers *Take the guided tour* and *Keyboard shortcuts*.
 
 1. **Open** https://praneet-admin.github.io/gengo/ — you land on **Learn**.
 2. **Tap a suggestion chip** (Resilient, Eloquent, Curious…) or type any English word and press **Explore**.

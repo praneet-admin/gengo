@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=58">
+  <link rel="stylesheet" href="styles.css?v=59">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -37,6 +37,7 @@
       <button class="tool-btn" type="button" id="textsize-toggle" aria-label="Text size: normal. Click to enlarge" title="Text size"><span aria-hidden="true">A</span><span class="tool-text" id="textsize-label">Text</span></button>
       <button class="tool-btn" type="button" id="easyread-toggle" aria-pressed="false" aria-label="Easy-read mode" title="Easy-read mode: wider spacing, plain font"><span aria-hidden="true">Aa</span><span class="tool-text">Easy read</span></button>
       <button class="tool-btn" type="button" id="shortcuts-button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (press ?)"><span aria-hidden="true">⌨</span><span class="tool-text">Keys</span></button>
+      <button class="tool-btn help-btn" type="button" id="help-button" aria-label="How to use Gengo" aria-haspopup="dialog" title="How to use Gengo"><span aria-hidden="true">?</span><span class="tool-text">Help</span></button>
     </div>
     <button class="tool-btn settings-button" type="button" id="settings-button" aria-label="Display settings" aria-haspopup="dialog"><span aria-hidden="true">⚙</span></button>
     <button class="tool-btn menu-button" type="button" id="menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav"><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="menu-x" aria-hidden="true">✕</span></button>
@@ -93,6 +94,7 @@
           <span class="nav-text">My Words</span> <span class="nav-badge" id="nav-words-badge" hidden>0</span>
         </button>
       </div>
+      <button class="nav-help" type="button" id="nav-help" aria-haspopup="dialog"><span aria-hidden="true">📖</span> How to use Gengo</button>
     </nav>
     <main id="main" class="workspace" tabindex="-1">
 
@@ -580,6 +582,39 @@
     </div>
   </dialog>
 
+  <dialog class="confirm help" id="help-dialog" aria-labelledby="help-title">
+    <div class="confirm-form help-form">
+      <div class="help-head">
+        <img class="bunny bunny-img help-bunny" src="assets/bunny-192.png" alt="" width="64" height="64">
+        <div><p class="kicker">Instructions</p><h2 id="help-title">How to use Gengo</h2></div>
+      </div>
+      <ol class="help-steps">
+        <li><strong>Learn</strong> — type a word (or tap a chip) and press <em>Explore</em>. Read it, hear it, then <em>Save Word</em> (+10 XP).</li>
+        <li><strong>Translate</strong> — your word is pre-filled; pick a language card and press <em>Translate</em>.</li>
+        <li><strong>Speak</strong> — hear the word in a female or male voice, then say it back with the mic (or type what you hear).</li>
+        <li><strong>Context</strong> — see the word in real Wikipedia sentences.</li>
+        <li><strong>Quiz</strong> — unlocks at 4 saved words; rounds of 5, +5 XP per correct answer.</li>
+        <li><strong>My Words</strong> — your collection with mastery stars ★★★.</li>
+        <li><strong>Focus Sprint</strong> — 5 distraction-free minutes with flashcards. The only place words get <em>mastered</em>, and where you earn a <em>Streak Shield</em> 🛡. Leaving the tab pauses it (3 strikes cancel).</li>
+      </ol>
+      <p class="help-rule"><strong>Daily goal:</strong> 3 activities (save, quiz or sprint) keep your streak 🔥 alive. A Streak Shield covers one missed day automatically.</p>
+      <div class="help-access">
+        <h3>Accessibility</h3>
+        <ul>
+          <li>Everything works with the <strong>keyboard</strong> (Tab, Enter, arrows) and <strong>screen readers</strong> — every button is labelled and results are announced.</li>
+          <li id="help-tools-line">Header switches: <strong>Motion</strong> (turn off animation), <strong>Contrast</strong>, <strong>Text</strong> size, <strong>Easy read</strong> (dyslexia-friendly spacing).</li>
+          <li>Nothing is audio-only: every Listen has text, speaking practice has a typed fallback.</li>
+          <li>Gengo follows your system's reduced-motion and high-contrast settings.</li>
+        </ul>
+      </div>
+      <div class="confirm-actions help-actions">
+        <button class="btn btn-secondary btn-small" type="button" id="help-tour">Take the guided tour</button>
+        <button class="btn btn-ghost btn-small" type="button" id="help-shortcuts">Keyboard shortcuts</button>
+        <button class="btn btn-primary" type="button" id="help-close">Got it</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="confirm shortcuts" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
     <div class="confirm-form">
       <h2 id="shortcuts-title">Keyboard shortcuts</h2>
@@ -644,6 +679,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=59"></script>
+  <script src="app.js?v=60"></script>
 </body>
 </html>

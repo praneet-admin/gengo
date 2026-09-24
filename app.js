@@ -2416,7 +2416,10 @@
     { target: function () { return isCompact() ? '#menu-button' : '.nav-tabs'; }, title: 'Six sections', text: function () { return (isCompact() ? 'Tap ☰ to switch between ' : 'Switch between ') + 'Learn, Translate, Speak, Context, Quiz and My Words. Learn is your home base.'; } },
     { target: '#timer-card', title: 'Focus Sprint', text: 'Five distraction-free minutes with your flashcards. It’s the only place words get mastered ★★★ — and where you earn a Streak Shield 🛡 that saves your streak if you miss a day. Leaving the tab pauses it.' },
     { target: function () { return $('habit-heading').closest('.side-card'); }, title: 'Your daily goal', text: 'Three activities a day (save, quiz or sprint) complete the goal and grow your streak 🔥. This card tracks today, the last week, your shields and your level.' },
-    { target: '.stats', title: 'Always in view', text: 'Streak, XP & level and today’s progress live up here. Press ? any time for keyboard shortcuts — you can replay this tour from there too.', next: 'Let’s go!' }
+    { target: function () { return isCompact() ? null : '.header-tools'; }, title: 'Made for everyone', text: function () { return isCompact()
+        ? 'Gengo works with screen readers and the keyboard, follows your phone’s reduced-motion and contrast settings, and nothing is audio-only — every Listen has text and speaking practice has a typed fallback.'
+        : 'These switches turn off animation (Motion), raise contrast, enlarge text, and give dyslexia-friendly spacing (Easy read). Everything also works with the keyboard and screen readers, and nothing is audio-only.'; } },
+    { target: function () { return isCompact() ? '#menu-button' : '#help-button'; }, title: 'Help is one tap away', text: function () { return (isCompact() ? 'Open ☰ and tap “How to use Gengo”' : 'Press Help') + ' any time for instructions, this tour and the keyboard shortcuts. Streak, XP and today’s progress always stay in the header.'; }, next: 'Let’s go!' }
   ];
   const tour = { step: -1, active: false, returnFocus: null };
 
@@ -2544,6 +2547,12 @@
     $('tour-back').addEventListener('click', function () { if (tour.step > 0) showTourStep(tour.step - 1); });
     $('tour-skip').addEventListener('click', function () { endTour(false); });
     $('tour-replay').addEventListener('click', function () { closeDialog($('shortcuts-dialog')); window.setTimeout(startTour, 150); });
+    function openHelp() { setMenu(false); openDialog($('help-dialog')); $('help-close').focus(); }
+    $('help-button').addEventListener('click', openHelp);
+    $('nav-help').addEventListener('click', openHelp);
+    $('help-close').addEventListener('click', function () { closeDialog($('help-dialog')); });
+    $('help-tour').addEventListener('click', function () { closeDialog($('help-dialog')); window.setTimeout(startTour, 150); });
+    $('help-shortcuts').addEventListener('click', function () { closeDialog($('help-dialog')); openDialog($('shortcuts-dialog')); $('shortcuts-close').focus(); });
     document.addEventListener('keydown', function (e) {
       if (!tour.active) return;
       if (e.key === 'Escape') { e.preventDefault(); endTour(false); }

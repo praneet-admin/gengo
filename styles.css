@@ -1647,3 +1647,28 @@ body.reduce-motion .focus-inner, body.reduce-motion .focus-bunny, body.reduce-mo
 @media (prefers-reduced-motion: reduce) { .tour-card, .tour-spot { animation: none !important; transition: none !important; } }
 body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !important; transition: none !important; }
 @media (forced-colors: active) { .tour-spot { box-shadow: none; outline: 4px solid Highlight; } .tour-card { border: 2px solid CanvasText; } }
+
+/* ---------- 43. Instructions dialog + Help entry points ---------- */
+.help-btn { background: var(--accent-500); color: var(--brand-900); border-color: var(--accent-600); }
+.help-btn:hover { background: var(--accent-400); }
+.nav-help { display: none; }
+@media (max-width: 1100px) {
+  .nav-help { display: flex; align-items: center; gap: 0.6rem; width: 100%; margin-top: 0.75rem; padding: 0.8rem 0.9rem; min-height: 54px; border-radius: var(--radius-md); border: 2px dashed var(--brand-100); background: var(--accent-100); color: var(--brand-900); font: inherit; font-weight: 900; text-align: left; cursor: pointer; }
+  .nav-help:hover, .nav-help:focus-visible { background: var(--accent-400); border-style: solid; }
+  #help-tools-line { display: none; } /* those switches are desktop-only */
+}
+.help { max-width: 560px; }
+.help-form { gap: 0.9rem; max-height: min(86vh, 760px); overflow: auto; }
+.help-head { display: flex; align-items: center; gap: 0.8rem; }
+.help-head h2 { margin: 0; }
+.help-head .kicker { margin: 0 0 0.15rem; }
+.help-bunny { width: 64px; height: 64px; flex: none; }
+.help-steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.45rem; color: var(--ink-700); font-weight: 700; line-height: 1.4; }
+.help-steps strong, .help-rule strong, .help-access strong { color: var(--brand-900); }
+.help-steps em { font-style: normal; font-weight: 900; color: var(--brand-700); }
+.help-rule { margin: 0; padding: 0.7rem 0.9rem; border-radius: var(--radius-md); background: var(--accent-100); color: var(--ink-900); font-weight: 700; }
+.help-access { padding: 0.8rem 0.9rem; border-radius: var(--radius-md); background: var(--bg-050); border: 2px solid var(--bg-200); }
+.help-access h3 { margin: 0 0 0.4rem; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brand-700); }
+.help-access ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--ink-700); font-weight: 700; line-height: 1.4; font-size: 0.95rem; }
+.help-actions { flex-wrap: wrap; }
+@media (max-width: 640px) { .help-actions .btn { flex: 1 1 100%; } .help-form { padding: 1.2rem; } }

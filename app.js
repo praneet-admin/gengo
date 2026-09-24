@@ -73,7 +73,7 @@
       rememberKey: false,
       apiKey: ''              // only populated when the learner opts in to remembering
     },
-    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {} }
+    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {}, onboarded: false }
   };
 
   let state = loadState();
@@ -124,7 +124,7 @@
     if (!LANGUAGES[merged.prefs.translateTarget]) merged.prefs.translateTarget = 'es';
     if (merged.prefs.voiceGender !== 'male') merged.prefs.voiceGender = 'female';
     if (!Number.isInteger(merged.prefs.textSize) || merged.prefs.textSize < 0 || merged.prefs.textSize > 2) merged.prefs.textSize = 0;
-    ['reduceMotion', 'highContrast', 'easyRead'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
+    ['reduceMotion', 'highContrast', 'easyRead', 'onboarded'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
     if (merged.prefs.speechEngine !== 'whisper') merged.prefs.speechEngine = 'auto';
     if (!merged.prefs.voiceNotes || typeof merged.prefs.voiceNotes !== 'object') merged.prefs.voiceNotes = {};
     if (merged.prefs.practiceTarget !== 'example') merged.prefs.practiceTarget = 'word';
@@ -2407,6 +2407,157 @@
     announce((gotIt ? 'Got it.' : 'Marked again.') + note + ' Next word: ' + currentCard().word);
   }
 
+  /* ---------- 15b. First-run guided tour ---------- */
+  const isCompact = function () { return window.matchMedia('(max-width: 1100px)').matches; };
+  const TOUR_STEPS = [
+    { title: 'Hi, I’m Gen! 👋', text: 'Gengo helps you learn English words that actually stick — look them up, hear them, say them, quiz yourself, and keep a streak. Want a 30-second tour?', next: 'Show me around', skip: 'I’ll explore myself' },
+    { target: '#search-form', title: 'Start with a word', text: 'Type any English word and press Explore, or tap a suggestion chip. You’ll get the meaning, pronunciation, an example, synonyms and antonyms — with a Listen button for each.' },
+    { target: '.chips', title: 'Save what you like', text: 'Every word you save is +10 XP and goes into My Words. Four saved words unlock the Quiz.' },
+    { target: function () { return isCompact() ? '#menu-button' : '.nav-tabs'; }, title: 'Six sections', text: function () { return (isCompact() ? 'Tap ☰ to switch between ' : 'Switch between ') + 'Learn, Translate, Speak, Context, Quiz and My Words. Learn is your home base.'; } },
+    { target: '#timer-card', title: 'Focus Sprint', text: 'Five distraction-free minutes with your flashcards. It’s the only place words get mastered ★★★ — and where you earn a Streak Shield 🛡 that saves your streak if you miss a day. Leaving the tab pauses it.' },
+    { target: function () { return $('habit-heading').closest('.side-card'); }, title: 'Your daily goal', text: 'Three activities a day (save, quiz or sprint) complete the goal and grow your streak 🔥. This card tracks today, the last week, your shields and your level.' },
+    { target: '.stats', title: 'Always in view', text: 'Streak, XP & level and today’s progress live up here. Press ? any time for keyboard shortcuts — you can replay this tour from there too.', next: 'Let’s go!' }
+  ];
+  const tour = { step: -1, active: false, returnFocus: null };
+
+  function startTour() {
+    if (tour.active || state.timer.locked) return;
+    tour.active = true;
+    tour.returnFocus = document.activeElement;
+    setMenu(false);
+    document.body.classList.add('tour-open');
+    $('tour').hidden = false;
+    showTourStep(0);
+    window.addEventListener('resize', positionTour);
+    window.addEventListener('scroll', positionTour, true);
+    announce('Welcome tour started. Use Next and Back, or Escape to skip.');
+  }
+
+  function endTour(finished) {
+    if (!tour.active) return;
+    tour.active = false;
+    $('tour').hidden = true;
+    document.body.classList.remove('tour-open');
+    document.querySelectorAll('.is-tour-target').forEach(function (el) { el.classList.remove('is-tour-target'); });
+    window.removeEventListener('resize', positionTour);
+    window.removeEventListener('scroll', positionTour, true);
+    if (!state.prefs.onboarded) { state.prefs.onboarded = true; saveState(); }
+    if (finished) {
+      showSection('learn');
+      buddySay('Pick your first word. I’m hungry.', 'cheer', 3200);
+      window.setTimeout(function () { $('search-input').focus(); }, 80);
+    } else if (tour.returnFocus && tour.returnFocus.focus) {
+      tour.returnFocus.focus();
+    }
+  }
+
+  function tourTarget(step) {
+    const t = TOUR_STEPS[step].target;
+    if (!t) return null;
+    const resolved = typeof t === 'function' ? t() : t;
+    return typeof resolved === 'string' ? document.querySelector(resolved) : resolved;
+  }
+
+  function showTourStep(i) {
+    tour.step = i;
+    const def = TOUR_STEPS[i];
+    const total = TOUR_STEPS.length;
+    document.querySelectorAll('.is-tour-target').forEach(function (el) { el.classList.remove('is-tour-target'); });
+    $('tour-step').textContent = i === 0 ? 'Welcome to Gengo' : 'Step ' + i + ' of ' + (total - 1);
+    $('tour-title').textContent = def.title;
+    $('tour-text').textContent = typeof def.text === 'function' ? def.text() : def.text;
+    $('tour-next').textContent = def.next || (i === total - 1 ? 'Done' : 'Next');
+    $('tour-skip').textContent = def.skip || 'Skip tour';
+    $('tour-skip').hidden = i === total - 1;
+    $('tour-back').hidden = i === 0;
+    const dots = $('tour-dots');
+    dots.textContent = '';
+    for (let d = 1; d < total; d++) { const li = document.createElement('li'); li.classList.toggle('is-on', d <= i); dots.appendChild(li); }
+    $('tour-bunny').classList.remove('is-happy', 'is-cheer', 'is-think');
+    $('tour-bunny').classList.add(i === 0 ? 'is-cheer' : (i === total - 1 ? 'is-happy' : 'is-think'));
+    const target = tourTarget(i);
+    if (target) {
+      target.classList.add('is-tour-target');
+      scrollTourTarget(target);
+    }
+    positionTour();
+    $('tour-next').focus();
+    announce($('tour-title').textContent + '. ' + $('tour-text').textContent);
+  }
+
+  /** Scrolls so the target sits in the upper part of the viewport (the card is pinned to the bottom on phones). */
+  function scrollTourTarget(target) {
+    const r = target.getBoundingClientRect();
+    const compact = window.matchMedia('(max-width: 640px)').matches;
+    const room = compact ? window.innerHeight * 0.55 : window.innerHeight; // keep clear of the bottom-pinned card
+    const headerH = compact ? document.querySelector('.app-header').getBoundingClientRect().height : 0; // sticky on small screens
+    const wanted = r.height > room - 32
+      ? window.scrollY + r.top - headerH - 12                      // tall target: pin its top just under the header
+      : window.scrollY + r.top - Math.max(headerH + 16, (room - r.height) / 2);
+    const top = Math.max(0, Math.min(wanted, document.documentElement.scrollHeight - window.innerHeight));
+    if (Math.abs(top - window.scrollY) < 2) { positionTour(); return; }
+    window.scrollTo({ top: top, behavior: motionReduced() ? 'auto' : 'smooth' });
+    window.setTimeout(function () {
+      if (Math.abs(window.scrollY - top) > 4) window.scrollTo(0, top); // smooth scroll didn't run (hidden tab, old browser)
+      positionTour();
+    }, motionReduced() ? 0 : 450);
+  }
+
+  /** Cuts a spotlight hole around the target and parks the card beside it (or centred for the welcome step). */
+  function positionTour() {
+    if (!tour.active) return;
+    const spot = $('tour-spot'), card = $('tour-card');
+    const target = tourTarget(tour.step);
+    const pad = 10;
+    if (!target) {
+      spot.style.cssText = 'left:50%;top:50%;width:0;height:0;';
+      card.style.cssText = '';
+      card.classList.add('is-centered');
+      return;
+    }
+    card.classList.remove('is-centered');
+    const r = target.getBoundingClientRect();
+    spot.style.left = (r.left - pad) + 'px';
+    spot.style.top = (r.top - pad) + 'px';
+    spot.style.width = (r.width + pad * 2) + 'px';
+    spot.style.height = (r.height + pad * 2) + 'px';
+    if (window.matchMedia('(max-width: 640px)').matches) { card.style.cssText = ''; return; } // CSS pins it to the bottom
+    const cw = Math.min(380, window.innerWidth - 32);
+    const ch = card.offsetHeight || 260;
+    let top = r.bottom + pad + 14;
+    if (top + ch > window.innerHeight - 16) top = r.top - pad - 14 - ch;
+    if (top < 16) top = Math.max(16, Math.min(window.innerHeight - ch - 16, r.top));
+    let left = r.left + r.width / 2 - cw / 2;
+    if (left + cw > window.innerWidth - 16) left = window.innerWidth - 16 - cw;
+    if (left < 16) left = 16;
+    // if the card would sit on top of the target (tall targets), slide it to the side instead
+    const overlaps = top < r.bottom + pad && top + ch > r.top - pad;
+    if (overlaps) {
+      top = Math.max(16, Math.min(window.innerHeight - ch - 16, r.top));
+      left = r.right + pad + 14 + cw <= window.innerWidth - 16 ? r.right + pad + 14 : Math.max(16, r.left - pad - 14 - cw);
+    }
+    card.style.cssText = 'left:' + Math.round(left) + 'px;top:' + Math.round(top) + 'px;width:' + cw + 'px;';
+  }
+
+  function bindTour() {
+    $('tour-next').addEventListener('click', function () { if (tour.step >= TOUR_STEPS.length - 1) endTour(true); else showTourStep(tour.step + 1); });
+    $('tour-back').addEventListener('click', function () { if (tour.step > 0) showTourStep(tour.step - 1); });
+    $('tour-skip').addEventListener('click', function () { endTour(false); });
+    $('tour-replay').addEventListener('click', function () { closeDialog($('shortcuts-dialog')); window.setTimeout(startTour, 150); });
+    document.addEventListener('keydown', function (e) {
+      if (!tour.active) return;
+      if (e.key === 'Escape') { e.preventDefault(); endTour(false); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); $('tour-next').click(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); $('tour-back').click(); }
+      else if (e.key === 'Tab') { // keep focus inside the card
+        const f = Array.prototype.filter.call($('tour-card').querySelectorAll('button'), function (b) { return !b.hidden; });
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+  }
+
   /* ---------- 16. Navigation, shared UI, init & tickers ---------- */
   const SECTIONS = ['learn', 'translate', 'speak', 'context', 'quiz', 'words'];
 
@@ -2508,7 +2659,7 @@
   function onGlobalKey(e) {
     const t = e.target;
     const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-    const dialogOpen = !!document.querySelector('dialog[open]') || document.body.classList.contains('focus-lock');
+    const dialogOpen = !!document.querySelector('dialog[open]') || document.body.classList.contains('focus-lock') || document.body.classList.contains('tour-open');
     const digit = /^(Digit|Numpad)([1-6])$/.exec(e.code || '');
     if (e.altKey && !e.ctrlKey && !e.metaKey && digit) {
       e.preventDefault();
@@ -2772,6 +2923,8 @@
     $('timer-pause').addEventListener('click', pauseTimer);
     $('timer-reset').addEventListener('click', resetTimer);
     bindFocusLock();
+    bindTour();
+    if (!state.prefs.onboarded && !state.timer.locked) window.setTimeout(startTour, 900);
 
     // Navigation
     SECTIONS.forEach(function (s) {
@@ -2898,6 +3051,7 @@
 
   // Small debug surface for graders/testing without leaking internals as globals.
   window.Gengo = Object.freeze({
+    tour: startTour,
     getState: function () { return JSON.parse(JSON.stringify(state)); },
     resetState: function () { resetState(); translateKeyInMemory = ''; lastQuery = ''; lastTranslation = null; lastContextQuery = ''; quizQuestion = null; quizRound = { answered: 0, correct: 0, xp: 0, startedAt: null }; quizCombo = 0; $('search-input').value = ''; showOnly(RESULT_STATES, 'result-empty'); showOnly(TRANSLATE_STATES, 'translate-empty'); showOnly(CONTEXT_STATES, 'context-empty'); renderAll(); applyDisplayPrefs(); showSection('learn'); toast('Gengo has been reset.', 'info'); },
     transcribe: async function (float32Samples) { const pipe = await loadWhisper(); return pipe(float32Samples); }

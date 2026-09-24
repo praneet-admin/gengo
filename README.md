@@ -97,6 +97,10 @@ A web page cannot stop someone switching tabs or apps, so the sprint makes leavi
 - **Streak Shield 🛡**: finishing a sprint banks a shield (max 2). If a day is missed, a shield is spent automatically on the next visit to cover that day, so the streak survives. Shielded days show a 🛡 in the week strip; shields are shown on the Today card.
 - Stored under `gengo-v1`: `words[].mastery` (0–3), `shields`, `shieldDays`.
 
+### First-run tour
+
+On first launch (no `prefs.onboarded` flag in `gengo-v1`) Gen runs a 7-step guided tour: a welcome card, then spotlight coach-marks (search, save/chips, navigation — the ☰ button on small screens — Focus Sprint, Today card, header stats). Implemented without a library: a fixed `.tour-spot` element whose huge `box-shadow` dims everything except the target, plus a positioned card that flips above/below/beside the target (pinned to the bottom on phones). Keyboard: →/← step, Esc skips, focus is trapped in the card; every step is announced to screen readers. Replay from the `?` shortcuts dialog or `Gengo.tour()`.
+
 ## Accessibility
 
 Built so that people with disabilities can use every feature, not just look at it.

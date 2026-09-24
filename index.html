@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=57">
+  <link rel="stylesheet" href="styles.css?v=58">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -551,6 +551,23 @@
     </div>
   </div>
 
+  <!-- First-run guided tour: a spotlight on one element at a time with Gen explaining it -->
+  <div class="tour" id="tour" hidden>
+    <div class="tour-spot" id="tour-spot" aria-hidden="true"></div>
+    <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-text" tabindex="-1">
+      <img class="bunny bunny-img tour-bunny" id="tour-bunny" src="assets/bunny-192.png" alt="" width="72" height="72">
+      <p class="tour-step kicker" id="tour-step"></p>
+      <h2 class="tour-title" id="tour-title"></h2>
+      <p class="tour-text" id="tour-text"></p>
+      <ol class="tour-dots" id="tour-dots" aria-hidden="true"></ol>
+      <div class="tour-actions">
+        <button class="btn btn-ghost btn-small tour-skip" type="button" id="tour-skip">Skip tour</button>
+        <button class="btn btn-secondary btn-small" type="button" id="tour-back">Back</button>
+        <button class="btn btn-primary" type="button" id="tour-next">Next</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sr-only" id="sr-announcer" aria-live="polite" aria-atomic="true"></div>
   <div class="confetti" id="confetti" aria-hidden="true"></div>
   <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
@@ -577,7 +594,7 @@
         <div><dt><kbd>Esc</kbd></dt><dd>Close any dialog, stop audio</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>Show this list</dd></div>
       </dl>
-      <div class="confirm-actions"><button class="btn btn-primary" type="button" id="shortcuts-close">Got it</button></div>
+      <div class="confirm-actions"><button class="btn btn-ghost btn-small" type="button" id="tour-replay">Replay the welcome tour</button><button class="btn btn-primary" type="button" id="shortcuts-close">Got it</button></div>
     </div>
   </dialog>
 
@@ -627,6 +644,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=58"></script>
+  <script src="app.js?v=59"></script>
 </body>
 </html>

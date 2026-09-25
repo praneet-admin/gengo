@@ -1,0 +1,93 @@
+THE WORD YOU LOOKED UP ON MONDAY IS GONE BY FRIDAY. HERE'S THE APP I BUILT TO FIX THAT.
+
+Gengo launch post — 25 September 2026
+By the Gengo launch team (one person and a purple rabbit)
+
+------------------------------------------------------------
+
+If you are in your final year and the placement season is coming, you already know the drill. The aptitude test has a verbal section. The HR round has a "tell me about yourself" that goes better with a few precise words in your pocket. So you do the sensible thing: you look words up.
+
+And then you forget them.
+
+Not because you are careless. Because looking a word up is the wrong shape for remembering it. You read one definition, you nod, you close the tab, and nothing about that moment gives your brain a reason to keep it. By Friday "meticulous" is a word you have definitely seen somewhere.
+
+Gengo is a small, free web app built around one idea: the words you look up should actually stay with you. It launches today at
+
+    https://praneet-admin.github.io/gengo/
+
+No sign-up. No app store. It runs in the browser on your phone, your tablet and your laptop, and it costs nothing — more on that below.
+
+------------------------------------------------------------
+WHO IT IS FOR (AND WHO IT IS NOT FOR)
+------------------------------------------------------------
+
+Gengo is for final-year students in India preparing for campus placements — the verbal-ability section of aptitude tests and the HR/communication rounds — who currently google words on the fly and lose them.
+
+It is also useful to early-career professionals who want sharper written English, but that is a side effect, not the target.
+
+It is NOT for children (there is no parental layer and the quiz assumes you can read a dictionary definition), NOT for absolute beginners in English (the app is entirely in English, with translation as a helper, not a teacher), and NOT for IELTS/TOEFL band-chasers who need graded word lists and timed essays. If you want a curriculum, Gengo is not it. If you want the twelve words you met this week to still be yours next month, it is.
+
+------------------------------------------------------------
+WHAT YOU DO TODAY WITHOUT IT
+------------------------------------------------------------
+
+Honestly? You search the word on Google, read the first definition, maybe screenshot it, and move on. Some of you keep a Notes file called "vocab" that you never reopen. A few of you have a flashcard app you installed in February. None of these steps test you, none of them speak the word out loud, and none of them notice when you stop.
+
+Gengo replaces that whole loop with one page.
+
+------------------------------------------------------------
+HOW IT WORKS — THE FIVE-MINUTE VERSION
+------------------------------------------------------------
+
+1. LOOK IT UP. Type any word. You get the meaning, the pronunciation (written and spoken), a real example sentence, synonyms and antonyms — pulled from free public dictionaries, so it works for any English word, not a fixed list.
+
+2. SAVE IT. One tap, +10 XP, and the word is in "My Words". This is the important part: from now on the app only ever tests you on words YOU chose. No random lists.
+
+3. HEAR IT. SAY IT. A clear voice reads the word, the meaning or the example. Then you press the microphone and say it back, and Gengo tells you how close you got. If your network blocks the browser's recogniser, it switches to an on-device one; if there is no mic at all, you type what you hear instead.
+
+4. GET QUIZZED. Once you have four words, the Quiz unlocks: rounds of five, multiple choice, built only from your collection. Streaks of correct answers earn combos and XP.
+
+5. FOCUS SPRINT. Five minutes, one screen, no distractions. Your saved words come at you as flashcards; "Got it" moves a word one star closer to mastered, "Again" puts it back in the deck. Switch to another tab and the sprint pauses and gives you a strike — three strikes and it is cancelled. Finish it and you earn a Streak Shield that covers you if you miss a day.
+
+Around all of this is a daily goal (three activities), a streak with milestones, and Gen — the purple rabbit who cheers when you hit the goal and sulks, briefly, when you get one wrong.
+
+------------------------------------------------------------
+WHY IT IS FREE
+------------------------------------------------------------
+
+Because it costs nothing to run. There is no server: your words, your streak and your settings live in your own browser. Lookups, translations and Wikipedia context come from free public APIs. Hosting is GitHub Pages. There is nothing to bill you for, so we do not.
+
+There is also a less accounting-ish reason. The people this is for are three months away from their first salary. A vocabulary app that charges them is solving the wrong problem.
+
+------------------------------------------------------------
+WHAT "NO ACCOUNT" ACTUALLY MEANS
+------------------------------------------------------------
+
+You open the link and you are in. Nothing is sent to us: not your name, not your words, not your progress. The only things that leave your device are the words you type into the search, translate and context boxes, which go to the dictionary, translation and Wikipedia services. If you clear your browser data, your collection is gone — so if you care about it, keep using the same browser, or add the app to your home screen (Chrome and Safari both offer this; Gengo is installable).
+
+------------------------------------------------------------
+IT IS BUILT FOR EVERYONE, NOT JUST THE FAST TYPERS
+------------------------------------------------------------
+
+Everything works with a keyboard and a screen reader. Nothing is audio-only: every spoken thing has text, every microphone exercise has a typed fallback. On laptops there are switches for reduced motion, high contrast, larger text and a dyslexia-friendly reading mode; on phones the app follows your system settings. If you have a disability and something gets in your way, that is a bug, and the app has a "Report a problem" button that files it for you with the technical details already attached.
+
+------------------------------------------------------------
+HOW TO GET STARTED IN SIXTY SECONDS
+------------------------------------------------------------
+
+Open https://praneet-admin.github.io/gengo/ — Gen will offer a thirty-second tour; take it or skip it.
+Tap a suggested word, or type the last word you had to google.
+Press Save.
+Do that twice more today (a word, a quiz round, or a sprint) and you have a streak.
+
+Tomorrow, come back for five minutes. That is the whole method. Words stick when you meet them more than once, in more than one way, on more than one day — and Gengo is built to make those meetings happen.
+
+------------------------------------------------------------
+TELL SOMEONE
+------------------------------------------------------------
+
+If it helps you, the Today card has a Share button. It sends a one-line message with your streak and the link to a friend on WhatsApp — the kind of message that got you to read this. That is the entire marketing department.
+
+Source code, the user guide and the interface guide are at https://github.com/praneet-admin/gengo. Ideas and bugs go in the Issues tab; complaints are read first.
+
+Start your streak today.

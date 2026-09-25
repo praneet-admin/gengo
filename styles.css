@@ -1692,3 +1692,12 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 .speak-btn.is-generating { position: relative; opacity: 0.85; }
 .speak-btn.is-generating .speak-label::after { content: " …"; }
 @media (max-width: 640px) { .natural-actions .btn { flex: 1 1 100%; } }
+
+/* natural-voices card must never be wider than its column */
+.speak-grid > .sub-card { min-width: 0; }
+.natural-card { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.natural-actions { min-width: 0; }
+.natural-actions .btn { white-space: normal; text-align: center; max-width: 100%; line-height: 1.2; }
+.natural-status { overflow-wrap: anywhere; }
+#engine-note { text-align: left; }
+#engine-note .link-btn { display: inline; padding: 0; margin: 0; }

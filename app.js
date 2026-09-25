@@ -76,7 +76,7 @@
       rememberKey: false,
       apiKey: ''              // only populated when the learner opts in to remembering
     },
-    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {}, onboarded: false }
+    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {}, onboarded: false, naturalVoices: false }
   };
 
   let state = loadState();
@@ -127,7 +127,7 @@
     if (!LANGUAGES[merged.prefs.translateTarget]) merged.prefs.translateTarget = 'es';
     if (merged.prefs.voiceGender !== 'male') merged.prefs.voiceGender = 'female';
     if (!Number.isInteger(merged.prefs.textSize) || merged.prefs.textSize < 0 || merged.prefs.textSize > 2) merged.prefs.textSize = 0;
-    ['reduceMotion', 'highContrast', 'easyRead', 'onboarded'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
+    ['reduceMotion', 'highContrast', 'easyRead', 'onboarded', 'naturalVoices'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
     if (merged.prefs.speechEngine !== 'whisper') merged.prefs.speechEngine = 'auto';
     if (!merged.prefs.voiceNotes || typeof merged.prefs.voiceNotes !== 'object') merged.prefs.voiceNotes = {};
     if (merged.prefs.practiceTarget !== 'example') merged.prefs.practiceTarget = 'word';
@@ -1253,7 +1253,8 @@
     activeButton: null,
     activeAudio: null,
     lastPickExact: true,
-    warned: {}
+    warned: {},
+    naturalToken: 0
   };
 
   /* Curated, clear-sounding system voices (macOS, Windows, Chrome, Android). Novelty voices are excluded. */
@@ -1325,7 +1326,8 @@
       const pick = speech.supported ? pickVoice('en-US') : null;
       state.prefs.voiceGender = saved;
       const label = $('voice-' + gender + '-label');
-      if (label) label.textContent = (gender === 'female' ? 'Female' : 'Male') + (pick ? ' · ' + pick.name.replace(/ Online.*$| \(.*?\)| - .*$/g, '').trim() : '');
+      const naturalOn = !!state.prefs.naturalVoices && naturalReady();
+      if (label) label.textContent = (gender === 'female' ? 'Female' : 'Male') + (naturalOn ? (gender === 'female' ? ' · Heart ✨' : ' · Michael ✨') : (pick ? ' · ' + pick.name.replace(/ Online.*$| \(.*?\)| - .*$/g, '').trim() : ''));
     });
     const v = speech.supported ? pickVoice('en-US') : null;
     const shortName = function (n) { return n.replace(/ Online.*$| \(.*?\)| - .*$/g, '').trim(); };
@@ -1341,6 +1343,7 @@
       el.textContent = v ? 'Voice: ' + shortName(v.name) + ' (the only English voice on this device)' : 'No speech voices available in this browser.';
       return;
     }
+    if (state.prefs.naturalVoices && naturalReady()) { el.textContent = 'English voice: ' + (state.prefs.voiceGender === 'male' ? 'Michael' : 'Heart') + ' (natural, on-device). Other languages use ' + (v ? 'your system voices.' : 'system voices.'); return; }
     el.textContent = v ? 'English voice: ' + shortName(v.name) + (speech.lastPickExact ? '' : ' (no ' + state.prefs.voiceGender + ' voice found — nearest available)') : 'No speech voices available in this browser.';
   }
 
@@ -1363,13 +1366,94 @@
   function stopSpeech() {
     if (speech.supported) window.speechSynthesis.cancel();
     if (speech.activeAudio) { speech.activeAudio.pause(); speech.activeAudio = null; }
+    speech.naturalToken++;
+    document.querySelectorAll('.is-generating').forEach(function (b) { b.classList.remove('is-generating'); });
     setSpeakingButton(null);
+    if (typeof markSlowHint === 'function') markSlowHint();
   }
+
+  /* ---------- 11b. Natural voices (on-device neural TTS: Kokoro-82M via kokoro-js) ----------
+     Downloaded once (~90 MB, cached by the browser), then English speech is generated locally — the same clear
+     voices in every browser, offline. Translations keep using the system voice for that language. */
+  const KOKORO_LIB = 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm';
+  const KOKORO_MODEL = 'onnx-community/Kokoro-82M-v1.0-ONNX';
+  const NATURAL_VOICE = { female: 'af_heart', male: 'am_michael' };
+  const natural = { tts: null, loading: null, cache: new Map(), failed: false };
+
+  function naturalReady() { return !!natural.tts; }
+
+  function setNaturalProgress(pct, label) {
+    const bar = $('natural-progress'), fill = $('natural-fill'), status = $('natural-status');
+    if (!bar) return;
+    bar.hidden = pct === null;
+    if (pct !== null) { fill.style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(Math.round(pct))); }
+    if (label) status.textContent = label;
+  }
+
+  function renderNaturalCard() {
+    const card = $('natural-card'); if (!card) return;
+    const dl = $('natural-download'), row = $('natural-toggle-row'), toggle = $('natural-toggle');
+    const ready = naturalReady();
+    dl.hidden = ready || !!natural.loading;
+    row.hidden = !ready;
+    toggle.checked = !!state.prefs.naturalVoices;
+    if (ready) setNaturalProgress(null, state.prefs.naturalVoices ? 'On — English is spoken by ' + (state.prefs.voiceGender === 'male' ? 'Michael' : 'Heart') + ' (natural). Tap Listen twice to hear it slowly.' : 'Downloaded. Switch it on to use the natural voices.');
+    else if (natural.failed) setNaturalProgress(null, 'The download didn’t complete. Check your connection and try again.');
+    renderVoiceName();
+  }
+
+  async function loadNatural() {
+    if (natural.tts) return natural.tts;
+    if (natural.loading) return natural.loading;
+    natural.failed = false;
+    $('natural-download').hidden = true;
+    setNaturalProgress(0, 'Downloading the voice model… this happens once.');
+    announce('Downloading natural voices.');
+    natural.loading = (async function () {
+      const lib = await import(KOKORO_LIB);
+      const device = ('gpu' in navigator) ? 'webgpu' : 'wasm';
+      const seen = {};
+      const opts = { dtype: device === 'webgpu' ? 'fp32' : 'q8', device: device, progress_callback: function (p) {
+        if (p && p.status === 'progress' && p.file) { seen[p.file] = p.progress || 0; const vals = Object.keys(seen).map(function (k) { return seen[k]; }); setNaturalProgress(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length, 'Downloading the voice model… ' + Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length) + '%'); }
+      } };
+      try { natural.tts = await lib.KokoroTTS.from_pretrained(KOKORO_MODEL, opts); }
+      catch (err) { if (device === 'webgpu') natural.tts = await lib.KokoroTTS.from_pretrained(KOKORO_MODEL, Object.assign({}, opts, { device: 'wasm', dtype: 'q8' })); else throw err; }
+      return natural.tts;
+    })();
+    try {
+      await natural.loading;
+      state.prefs.naturalVoices = true; saveState();
+      toast('Natural voices ready ✨', 'celebrate');
+      announce('Natural voices are ready and switched on.');
+      buddySay('Ooh, I sound so much better now.', 'cheer', 3000);
+    } catch (err) {
+      natural.failed = true; natural.tts = null;
+      toast('Couldn’t download the natural voices. Using the built-in voice for now.', 'error', 5000);
+    } finally {
+      natural.loading = null;
+      renderNaturalCard();
+    }
+    return natural.tts;
+  }
+
+  /** Returns a Blob URL of `text` spoken by the natural voice for the chosen gender (cached). */
+  async function naturalSpeechUrl(text) {
+    const voice = NATURAL_VOICE[state.prefs.voiceGender === 'male' ? 'male' : 'female'];
+    const key = voice + '|' + text;
+    if (natural.cache.has(key)) return natural.cache.get(key);
+    const audio = await natural.tts.generate(text, { voice: voice });
+    const url = URL.createObjectURL(audio.toBlob());
+    if (natural.cache.size > 60) { const first = natural.cache.keys().next().value; URL.revokeObjectURL(natural.cache.get(first)); natural.cache.delete(first); }
+    natural.cache.set(key, url);
+    return url;
+  }
+
+  function useNaturalFor(lang) { return !!state.prefs.naturalVoices && naturalReady() && String(lang || 'en').slice(0, 2).toLowerCase() === 'en'; }
 
   /* Listen again = slow. Like Google Translate: the first play of a text is normal speed; every replay of the *same*
      text is slowed right down so each syllable is clear. A different text starts at normal speed again. */
   const replay = { key: null, slowNext: false };
-  const SLOW_RATE = 0.55;
+  const SLOW_RATE = 0.5;
   function replayKey(text, lang) { return (lang || '') + '|' + text; }
   function slowFor(text, lang) {
     const key = replayKey(text, lang);
@@ -1390,16 +1474,35 @@
   }
 
   /** Speaks `text`, preferring a recorded clip when `audioUrl` is provided. Never autoplays. */
-  function speakText(text, lang, button, audioUrl) {
+  function speakText(text, lang, button, audioUrl, slowOverride, skipNatural) {
     stopSpeech();
     if (!text) { toast('Nothing to play yet.', 'info'); return; }
-    const slow = slowFor(text, lang);
+    const slow = typeof slowOverride === 'boolean' ? slowOverride : slowFor(text, lang);
     if (slow) announce('Playing slowly.');
+    if (!audioUrl && !skipNatural && useNaturalFor(lang)) {
+      const token = ++speech.naturalToken;
+      setSpeakingButton(button); if (button) button.classList.add('is-generating');
+      naturalSpeechUrl(text).then(function (url) {
+        if (button) button.classList.remove('is-generating');
+        if (token !== speech.naturalToken) return; // a newer request replaced this one
+        replay.key = replayKey(text, lang); replay.slowNext = true; // keep the slow-replay state we already advanced
+        speakText(text, lang, button, url, slow);
+      }).catch(function () {
+        if (button) button.classList.remove('is-generating');
+        if (token !== speech.naturalToken) return;
+        speakText(text, lang, button, null, slow, true); // fall back to the system voice
+      });
+      return;
+    }
 
     if (audioUrl) {
       const audio = new Audio(audioUrl);
-      audio.playbackRate = slow ? 0.6 : 1;
+      const rate = slow ? 0.55 : 1;
+      audio.defaultPlaybackRate = rate; audio.playbackRate = rate;
       if ('preservesPitch' in audio) audio.preservesPitch = true;
+      // iOS Safari resets playbackRate when the clip loads — set it again once it actually plays
+      audio.addEventListener('playing', function () { audio.playbackRate = rate; });
+      audio.addEventListener('loadedmetadata', function () { audio.playbackRate = rate; });
       speech.activeAudio = audio;
       setSpeakingButton(button);
       const done = function () { if (speech.activeAudio === audio) { speech.activeAudio = null; setSpeakingButton(null); markSlowHint(); } };
@@ -2599,6 +2702,10 @@
     $('help-tour').addEventListener('click', function () { closeDialog($('help-dialog')); window.setTimeout(startTour, 150); });
     $('help-shortcuts').addEventListener('click', function () { closeDialog($('help-dialog')); openDialog($('shortcuts-dialog')); $('shortcuts-close').focus(); });
     $('help-report').addEventListener('click', reportProblem);
+    $('natural-download').addEventListener('click', loadNatural);
+    $('natural-toggle').addEventListener('change', function () { state.prefs.naturalVoices = $('natural-toggle').checked; saveState(); renderNaturalCard(); toast(state.prefs.naturalVoices ? 'Natural voices on ✨' : 'Back to the built-in voice.', 'info'); });
+    renderNaturalCard();
+    if (state.prefs.naturalVoices) loadNatural(); // previously downloaded: warms from the browser cache
     $('share-button').addEventListener('click', shareStreak);
     registerServiceWorker();
     document.addEventListener('keydown', function (e) {

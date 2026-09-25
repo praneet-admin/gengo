@@ -1681,3 +1681,14 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 /* ---------- 45. Listen again = slow (turtle hint on the button) ---------- */
 .speak-btn.is-slow-next .speak-label::after { content: " 🐢"; }
 .speak-btn.is-slow-next { --edge: var(--mint-500); }
+
+/* ---------- 46. Natural voices card + generating state ---------- */
+.natural-card { margin: 0.6rem 0 0.4rem; padding: 0.8rem 0.9rem; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--accent-100), #fff); border: 2px solid var(--accent-400); display: grid; gap: 0.55rem; }
+.natural-head { display: grid; gap: 0.15rem; }
+.natural-head strong { color: var(--brand-900); }
+.natural-status { font-size: 0.85rem; font-weight: 700; color: var(--ink-700); }
+.natural-actions { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; align-items: center; }
+.natural-progress { margin-top: 0.1rem; }
+.speak-btn.is-generating { position: relative; opacity: 0.85; }
+.speak-btn.is-generating .speak-label::after { content: " …"; }
+@media (max-width: 640px) { .natural-actions .btn { flex: 1 1 100%; } }

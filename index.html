@@ -27,7 +27,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=61">
+  <link rel="stylesheet" href="styles.css?v=62">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -313,6 +313,17 @@
                 <label class="radio-pill"><input type="radio" name="voice-gender" id="voice-male" value="male"> <span id="voice-male-label">Male</span></label>
               </fieldset>
               <p class="sr-note voice-name" id="voice-name" role="status">English voice: …</p>
+              <div class="natural-card" id="natural-card">
+                <div class="natural-head">
+                  <strong>✨ Natural voices</strong>
+                  <span class="natural-status" id="natural-status">Clear, human-sounding English voices that run on your device.</span>
+                </div>
+                <div class="natural-actions">
+                  <button class="btn btn-secondary btn-small" type="button" id="natural-download">Download natural voices (≈90 MB, once)</button>
+                  <label class="check-row natural-toggle" id="natural-toggle-row" hidden><input type="checkbox" id="natural-toggle"> <span>Use natural voices for English</span></label>
+                </div>
+                <div class="progress-track is-thin natural-progress" id="natural-progress" role="progressbar" aria-label="Voice download" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div class="progress-fill" id="natural-fill"></div></div>
+              </div>
               <details class="note-details"><summary>About voices</summary><p class="sr-note" id="voice-note">Uses your device’s built-in voices.</p></details>
               <p class="side-sub" id="tts-unsupported" hidden>Speech synthesis isn't supported in this browser, so Listen buttons will use dictionary audio only.</p>
               <div class="listen-buttons">
@@ -696,6 +707,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=63"></script>
+  <script src="app.js?v=64"></script>
 </body>
 </html>

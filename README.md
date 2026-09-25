@@ -1,6 +1,6 @@
 # Gengo
 
-**Status:** v1.0.0 — final submission build (24 Sep 2026).
+**Status:** v1.1.0 — final (25 Sep 2026): app, launch kit and promo video.
 **Live app:** https://praneet-admin.github.io/gengo/ · **Source:** https://github.com/praneet-admin/gengo
 
 **User guide:** [GUIDE.md](GUIDE.md) — everything Gengo can do, section by section, plus XP/streak rules, shortcuts and FAQ.

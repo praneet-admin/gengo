@@ -1175,10 +1175,47 @@
   }
 
   /** MyMemory returns HTTP 200 even for errors, so the body's responseStatus is the real signal. */
+  /** MyMemory's top hit for a single word is sometimes a stray human memory ("meticulous" → "léché").
+   *  For one-word queries into Latin-script languages, re-rank its candidates: quality, machine translation,
+   *  single-word answers and cognate similarity to the English word all count. Phrases keep the top hit. */
+  const LATIN_TARGETS = { es: 1, fr: 1, de: 1, it: 1, pt: 1, en: 1 };
+  function levenshtein(a, b) {
+    const prev = []; for (let j = 0; j <= b.length; j++) prev[j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      let diag = prev[0]; prev[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const tmp = prev[j];
+        prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+        diag = tmp;
+      }
+    }
+    return prev[b.length];
+  }
+  function bestMyMemoryMatch(text, target, data) {
+    const top = data && data.responseData && typeof data.responseData.translatedText === 'string' ? data.responseData.translatedText.trim() : '';
+    const matches = Array.isArray(data && data.matches) ? data.matches : [];
+    if (!/^\S+$/.test(text) || !LATIN_TARGETS[target] || matches.length < 2) return top;
+    const fold = function (w) { return String(w || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); };
+    const sim = function (a, b) { a = fold(a); b = fold(b); if (!a || !b) return 0; return 1 - levenshtein(a, b) / Math.max(a.length, b.length); };
+    const seen = {};
+    matches.forEach(function (m) { const k = fold(m.translation); if (k) seen[k] = (seen[k] || 0) + 1; });
+    let best = null, bestScore = -1;
+    matches.forEach(function (m) {
+      const tr = String(m.translation || '').trim();
+      const q = Number(m.quality) || 0;
+      if (!tr || q < 40 || fold(m.segment) !== fold(text)) return;
+      const single = /^\S+$/.test(tr);
+      // crowd "quality" is unreliable for single words, so it counts less than looking like the English word
+      const score = q * 0.2 + 50 * sim(text, tr) + (/^MT/i.test(String(m['created-by'] || '')) ? 15 : 0) + (single ? 10 : 0) + (tr === tr.toLowerCase() ? 2 : 0) + 5 * ((seen[fold(tr)] || 1) - 1);
+      if (score > bestScore) { bestScore = score; best = tr; }
+    });
+    return best || top;
+  }
+
   async function translateViaMyMemory(text, target) {
     const data = await fetchJSON(MYMEMORY_API + 'q=' + encodeURIComponent(text) + '&langpair=en|' + encodeURIComponent(target));
     const status = data && Number(data.responseStatus);
-    const translated = data && data.responseData && typeof data.responseData.translatedText === 'string' ? data.responseData.translatedText.trim() : '';
+    const translated = bestMyMemoryMatch(text, target, data);
     if (data && data.quotaFinished === true) throw withCode(new Error('quota'), 'quota');
     if (status !== 200 || !translated || translated === String(data.responseDetails || '').trim()) {
       const e = withCode(new Error('mymemory'), 'api');

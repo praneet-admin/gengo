@@ -1,0 +1,41 @@
+name: 🐛 Something's broken
+description: A page, button, voice or lookup isn't doing what it should.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks — this is the fastest way to get it fixed. Most reports take under a minute to file."
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, and what did you expect instead?
+      placeholder: "I pressed Start speaking on Chrome (Android) and it said recognition isn't available…"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Your device (filled in automatically if you came from the app's "Report a problem" button)
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How bad is it?
+      options:
+        - I can't use a whole section
+        - Annoying but I can work around it
+        - Cosmetic
+    validations:
+      required: true

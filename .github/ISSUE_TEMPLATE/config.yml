@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Read the user guide first
+    url: https://github.com/praneet-admin/gengo/blob/main/GUIDE.md#17-troubleshooting--faq
+    about: Mic not working, voice sounds wrong, quiz locked, translation quota — the FAQ covers the usual ones.

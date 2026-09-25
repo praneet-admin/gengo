@@ -4,7 +4,7 @@
 **Live app:** https://praneet-admin.github.io/gengo/ · **Source:** https://github.com/praneet-admin/gengo
 
 **User guide:** [GUIDE.md](GUIDE.md) — everything Gengo can do, section by section, plus XP/streak rules, shortcuts and FAQ.
-**Promo videos:** [docs/gengo-promo.mp4](docs/gengo-promo.mp4) (56 s, 16:9), [docs/gengo-promo-vertical.mp4](docs/gengo-promo-vertical.mp4) (56 s, 9:16 for Reels/Shorts/status), [docs/gengo-teaser.mp4](docs/gengo-teaser.mp4) (17 s).
+**Promo video:** [docs/gengo-promo.mp4](docs/gengo-promo.mp4) (57 s, 1080p60, real screen recordings of the app).
 **Launch note:** [LAUNCH.md](LAUNCH.md) — who it's for, which launch jobs were done, what was skipped. Blog and post kit in [launch/](launch/). Support policy in [SUPPORT.md](SUPPORT.md).
 **Interface guide:** [UI-UX.md](UI-UX.md) — the design system, layouts, every screen and the UX flows (with screenshots).
 

@@ -27,7 +27,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
-  <link rel="stylesheet" href="styles.css?v=63">
+  <link rel="stylesheet" href="styles.css?v=64">
 </head>
 <body>
   <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -283,6 +283,11 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8.5v2.1a6.5 6.5 0 0 1 0 12.8v2.1a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></svg>
                 <span class="speak-label">Listen</span>
               </button>
+              <p class="translate-alt" id="translate-alt" hidden></p>
+            </div>
+            <div class="translate-senses" id="translate-senses" hidden>
+              <p class="kicker">By meaning <span class="source-note">via Wiktionary</span></p>
+              <ul class="sense-list" id="sense-list"></ul>
             </div>
           </article>
         </div>
@@ -497,6 +502,7 @@
           <span class="xp-pill">+15 XP</span>
         </div>
         <p class="side-sub" id="timer-sub">Five minutes, no distractions. The only place words get <strong>mastered</strong> — and where you earn a <strong>Streak Shield</strong>.</p>
+        <p class="due-note" id="due-note" hidden></p>
         <div class="timer-ring" id="timer-ring" style="--progress:0">
           <div class="timer-display" id="timer-display" role="timer" aria-live="off" aria-atomic="true">05:00</div>
         </div>
@@ -638,6 +644,9 @@
         <button class="btn btn-secondary btn-small" type="button" id="help-tour">Take the guided tour</button>
         <button class="btn btn-ghost btn-small" type="button" id="help-shortcuts">Keyboard shortcuts</button>
         <button class="btn btn-ghost btn-small" type="button" id="help-report">Report a problem</button>
+        <button class="btn btn-ghost btn-small" type="button" id="help-export">Export my data</button>
+        <button class="btn btn-ghost btn-small" type="button" id="help-import">Import data</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
         <button class="btn btn-primary" type="button" id="help-close">Got it</button>
       </div>
     </div>
@@ -692,6 +701,11 @@
         <li class="tile tile-quiz"><span class="tile-label">Quiz correct</span><strong class="tile-value" id="recap-quiz">0</strong></li>
         <li class="tile tile-sprints"><span class="tile-label">Sprints</span><strong class="tile-value" id="recap-sprints">0</strong></li>
       </ul>
+      <div class="recap-feedback" id="recap-feedback">
+        <span id="recap-feedback-q">Was today useful?</span>
+        <button class="fb-btn" type="button" id="fb-yes" aria-label="Yes, today was useful">👍</button>
+        <button class="fb-btn" type="button" id="fb-no" aria-label="No, today wasn’t useful — tell us why">👎</button>
+      </div>
       <button class="btn btn-lime btn-lg" type="button" id="recap-close">Continue</button>
     </div>
   </dialog>
@@ -707,6 +721,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=65"></script>
+  <script src="app.js?v=66"></script>
 </body>
 </html>

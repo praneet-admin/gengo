@@ -107,6 +107,8 @@ If a word isn't found, Gengo tells you plainly and offers **Try again** or a qui
 
 The result shows English on the left and the translation on the right with a **Listen** button that speaks it in that language's voice.
 
+**Single words get dictionary-quality translations.** For one word, Gengo reads Wiktionary's human-curated translation tables and shows them **by meaning** — e.g. *meticulous* → French *méticuleux / soigneux* under "characterized by very precise attention to detail". Tap any chip to hear it. The machine translation (MyMemory) is shown underneath when it differs. Phrases and sentences use MyMemory.
+
 Translation uses the free MyMemory service — no key, no setup. It has a daily fair-use quota; if you hit it, Gengo says so.
 
 ---
@@ -188,6 +190,10 @@ When the ring completes: confetti, **+15 XP**, the number of cards you reviewed,
 
 ---
 
+## 10b. Spaced review — words come back when they're about to fade
+
+Every saved word carries a **review date**. "Got it" in a Focus Sprint or a correct quiz answer pushes it out (1 day → 3 → 7 → 14 as mastery grows); "Again" or a wrong answer brings it back in ten minutes. The Focus Sprint card tells you how many words are **due**, the sprint deck starts with them, and the quiz favours them. That is what makes the words stick — you meet each one again right before you'd forget it.
+
 ## 11. XP, levels, streaks & shields
 
 ### XP
@@ -203,7 +209,7 @@ XP adds up to levels: Level 2 at 50 XP, then 120, 220, 350, 500, 700, 950, 1 250
 
 ### Daily goal & streak
 - **3 activities a day** complete the goal (saves, quiz rounds *or* sprints all count). The goal path fills 1 → 2 → ★, then Gen celebrates and a **Daily recap** shows your XP, saves, quiz score and sprints.
-- Do at least one activity a day and your **streak** 🔥 grows. Milestones at **3, 7, 14, 30, 60 and 100 days** get a special cheer. Your **best streak** is remembered.
+- When the daily recap appears it asks one question — **Was today useful? 👍 👎** — a thumbs-down opens a short form so we hear why. Do at least one activity a day and your **streak** 🔥 grows. Milestones at **3, 7, 14, 30, 60 and 100 days** get a special cheer. Your **best streak** is remembered.
 - The **7-day strip** on the Today card shows how much you did each day.
 
 ### Streak Shields 🛡
@@ -269,6 +275,7 @@ Shortcuts pause while you're typing in a field or while a dialog or the focus sc
 - **No account, no server.** Everything — saved words, XP, streak, shields, settings — is stored in your browser (`localStorage`, key `gengo-v1`) on *this* device. Clear your browser data and it's gone; use another browser or device and you start fresh.
 - Word lookups go to free public dictionaries, translations to MyMemory, context searches to Wikipedia. Only the text you search/translate is sent — never your collection or progress.
 - Speaking practice uses your browser's recogniser or an on-device model; with the on-device model, audio never leaves your browser.
+- **Backup & move devices**: **Help → Export my data** downloads a `gengo-backup-<date>.json` with everything; **Help → Import data** restores it on any device or browser (it asks before replacing what's there).
 - **Reset everything**: open the browser console and run `Gengo.resetState()`, or clear site data for the page.
 
 ---

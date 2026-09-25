@@ -22,6 +22,7 @@
   const API_TIMEOUT_MS = 10000;
 
   const MINUTE = 60 * 1000;
+  const DAY = 24 * 60 * MINUTE;
   const TIMER_DURATION = 5 * MINUTE;
   const MAX_STRIKES = 3;    // times a learner may leave the tab/app during a sprint before it is cancelled
 
@@ -56,6 +57,7 @@
     xp: 0,
     activity: {},             // { 'YYYY-MM-DD': count }
     dailyGoal: 3,
+    feedback: null,           // { date, value: 'up'|'down' } — last daily-recap thumbs
     shields: 0,               // Streak Shields earned by finishing Focus Sprints (max MAX_SHIELDS)
     shieldDays: [],           // 'YYYY-MM-DD' days a shield bridged so the streak survived
     goalCelebratedOn: null,   // date key of the last goal celebration
@@ -136,6 +138,7 @@
     if (merged.timer.remainingMs < 0 || merged.timer.remainingMs > TIMER_DURATION) merged.timer.remainingMs = TIMER_DURATION;
     merged.timer.locked = merged.timer.locked === true && !merged.timer.completed;
     if (!Number.isInteger(merged.shields) || merged.shields < 0 || merged.shields > MAX_SHIELDS) merged.shields = 0;
+    if (!merged.feedback || typeof merged.feedback !== 'object' || typeof merged.feedback.date !== 'string') merged.feedback = null;
     merged.shieldDays = Array.isArray(merged.shieldDays) ? merged.shieldDays.filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); }).slice(-60) : [];
     if (!Number.isInteger(merged.timer.strikes) || merged.timer.strikes < 0 || merged.timer.strikes > MAX_STRIKES) merged.timer.strikes = 0;
     return merged;
@@ -175,7 +178,10 @@
       antonyms: stringList(w.antonyms, 8),
       source: typeof w.source === 'string' ? w.source : '',
       savedAt: typeof w.savedAt === 'number' ? w.savedAt : Date.now(),
-      mastery: Number.isInteger(w.mastery) && w.mastery >= 0 && w.mastery <= MASTERY_MAX ? w.mastery : 0
+      mastery: Number.isInteger(w.mastery) && w.mastery >= 0 && w.mastery <= MASTERY_MAX ? w.mastery : 0,
+      lastReview: Number.isFinite(w.lastReview) ? w.lastReview : null,
+      due: Number.isFinite(w.due) ? w.due : null,        // next review time; null = never reviewed → due now
+      lapses: Number.isInteger(w.lapses) && w.lapses >= 0 ? w.lapses : 0
     };
   }
 
@@ -518,6 +524,7 @@
       tweenNumber($('recap-quiz'), d.quiz, 700);
       tweenNumber($('recap-sprints'), d.sprints, 700);
     }, 250);
+    renderFeedback();
     $('recap-close').focus();
     announce(($('recap-title').textContent) + ' ' + d.xp + ' XP earned, ' + d.saves + ' words saved, ' + d.quiz + ' quiz answers correct, ' + d.sprints + ' sprints.');
   }
@@ -1175,6 +1182,60 @@
   }
 
   /** MyMemory returns HTTP 200 even for errors, so the body's responseStatus is the real signal. */
+  /* Wiktionary's translation tables: human-curated, keyless, grouped by meaning — the best free source for a single word. */
+  const WIKT_PARSE = 'https://en.wiktionary.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&origin=*&page=';
+  const WIKT_LANG_CODES = { es: ['es'], fr: ['fr'], de: ['de'], it: ['it'], pt: ['pt'], hi: ['hi'], ta: ['ta'], ja: ['ja'], en: ['en'] };
+  function stripWikitext(t) {
+    return String(t || '').replace(/\{\{[^{}]*\}\}/g, '').replace(/\[\[(?:[^|\]]*\|)?([^\]]+)\]\]/g, '$1').replace(/'{2,}/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  }
+  async function fetchWiktionaryTranslations(word, target, depth) {
+    const codes = WIKT_LANG_CODES[target]; if (!codes) return [];
+    const data = await fetchJSON(WIKT_PARSE + encodeURIComponent(word), null, 8000);
+    let wt = data && data.parse && data.parse.wikitext; if (!wt) return [];
+    const en = wt.split(/\n==[^=\n][^\n]*==\n/); // level-2 sections; English is first if present
+    const idx = wt.indexOf('==English==');
+    if (idx !== -1) { const after = wt.slice(idx + 11); const next = after.search(/\n==[^=\n][^\n]*==\n/); wt = next === -1 ? after : after.slice(0, next); }
+    // big entries keep translations on a subpage
+    const see = /\{\{see translation subpage\|[^}]*\}\}|\{\{trans-see\|[^|}]*\|([^}|]+)/.exec(wt);
+    if (!/\{\{trans-top/.test(wt) && see && !depth) return fetchWiktionaryTranslations(see[1] ? see[1] : word + '/translations', target, 1);
+    const senses = [];
+    const blockRe = /\{\{(?:trans-top|checktrans-top)\|?([^}]*)\}\}([\s\S]*?)\{\{(?:trans-bottom|checktrans-bottom)\}\}/g;
+    let m;
+    while ((m = blockRe.exec(wt)) && senses.length < 4) {
+      const sense = stripWikitext(m[1].split('|').filter(function (p) { return p && !/^(id=|-)/.test(p.trim()); }).pop() || '');
+      const words = [];
+      codes.forEach(function (code) {
+        const tRe = new RegExp('\\{\\{t{1,2}\\+?\\|' + code + '\\|([^|}]+)(?:\\|[^}]*?tr=([^|}]+))?', 'g');
+        let t;
+        while ((t = tRe.exec(m[2])) && words.length < 5) {
+          const w = stripWikitext(t[1]); if (!w) continue;
+          if (!words.some(function (x) { return x.word === w; })) words.push({ word: w, tr: t[2] ? stripWikitext(t[2]) : '' });
+        }
+      });
+      if (words.length) senses.push({ sense: sense, words: words });
+    }
+    return senses;
+  }
+
+  function renderSenses(senses, target) {
+    const box = $('translate-senses'), list = $('sense-list');
+    list.textContent = '';
+    box.hidden = !senses.length;
+    senses.forEach(function (sn) {
+      const li = document.createElement('li'); li.className = 'sense';
+      const label = document.createElement('span'); label.className = 'sense-label'; label.textContent = sn.sense || 'general'; li.appendChild(label);
+      const row = document.createElement('div'); row.className = 'sense-words';
+      sn.words.forEach(function (w) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'chip sense-chip'; b.setAttribute('lang', target);
+        b.textContent = w.word + (w.tr ? ' · ' + w.tr : '');
+        b.setAttribute('aria-label', 'Listen to ' + w.word);
+        b.addEventListener('click', function () { speakText(w.word, LANGUAGES[target].speech, b); });
+        row.appendChild(b);
+      });
+      li.appendChild(row); list.appendChild(li);
+    });
+  }
+
   /** MyMemory's top hit for a single word is sometimes a stray human memory ("meticulous" → "léché").
    *  For one-word queries into Latin-script languages, re-rank its candidates: quality, machine translation,
    *  single-word answers and cognate similarity to the English word all count. Phrases keep the top hit. */
@@ -1244,10 +1305,25 @@
     let libreErr = null;
     try {
       let result = null;
+      const single = /^[A-Za-z][A-Za-z'-]*$/.test(text);
+      const wikt = single ? fetchWiktionaryTranslations(text.toLowerCase(), target).catch(function () { return []; }) : Promise.resolve([]);
       if (libreTranslateReady()) {
         try { result = await translateViaLibre(text, target); } catch (err) { libreErr = err; }
       }
-      if (!result) result = await translateViaMyMemory(text, target);
+      let mtErr = null;
+      if (!result) { try { result = await translateViaMyMemory(text, target); } catch (err) { mtErr = err; } }
+      const senses = await wikt;
+      if (senses.length) {
+        // dictionary translations win for single words; the MT result is shown as a footnote when it differs
+        const primary = senses[0].words[0].word;
+        const alt = result && result.text && result.text.toLowerCase() !== primary.toLowerCase() ? result.text : '';
+        result = { text: primary, source: 'Wiktionary' };
+        $('translate-alt').hidden = !alt; $('translate-alt').textContent = alt ? 'Machine translation: ' + alt : '';
+      } else {
+        if (!result) throw mtErr || withCode(new Error('api'), 'api');
+        $('translate-alt').hidden = true;
+      }
+      renderSenses(senses, target);
       lastTranslation = { text: result.text, lang: LANGUAGES[target].speech };
       $('translate-source-text').textContent = text;
       $('translate-target-label').textContent = LANGUAGES[target].name + ' · via ' + result.source;
@@ -2157,7 +2233,9 @@
   function buildQuestion() {
     const pool = state.words.filter(function (w) { return w.id !== state.quiz.lastWordId; });
     const candidates = pool.length ? pool : state.words;
-    const target = candidates[Math.floor(Math.random() * candidates.length)];
+    const due = candidates.filter(isDue);
+    const from = due.length && Math.random() < 0.7 ? due : candidates; // favour words that are due
+    const target = from[Math.floor(Math.random() * from.length)];
     const distractors = shuffle(state.words.filter(function (w) { return w.id !== target.id; })).slice(0, 3);
     return { wordId: target.id, correct: target, options: shuffle([target].concat(distractors)), answered: false };
   }
@@ -2262,6 +2340,8 @@
     q.chosenId = chosenId;
     q.answered = true;
     const correct = chosenId === q.correct.id;
+    const savedWord = state.words.find(function (w) { return w.id === q.correct.id; });
+    if (savedWord) { scheduleReview(savedWord, correct); renderDue(); }
     $('quiz-options').querySelectorAll('.quiz-option').forEach(function (b) {
       b.disabled = true;
       if (b.dataset.id === q.correct.id) {
@@ -2315,6 +2395,26 @@
     if (quizRound.answered >= ROUND_SIZE) $('quiz-next').textContent = 'Finish round';
     else $('quiz-next').textContent = 'Continue';
     $('quiz-next').focus();
+  }
+
+  /* ---------- 14b. Spaced review (lightweight SRS) ----------
+     Every word carries a `due` time. "Got it" in a sprint or a correct quiz answer pushes it out
+     (1 → 3 → 7 → 14 days by mastery); "Again" or a wrong answer brings it back in 10 minutes.
+     Due words come first in the sprint deck and are favoured by the quiz. */
+  const REVIEW_INTERVALS = [DAY, 3 * DAY, 7 * DAY, 14 * DAY];
+  function scheduleReview(word, success) {
+    const now = Date.now();
+    word.lastReview = now;
+    if (success) word.due = now + REVIEW_INTERVALS[Math.min(word.mastery || 0, REVIEW_INTERVALS.length - 1)];
+    else { word.lapses = (word.lapses || 0) + 1; word.due = now + 10 * MINUTE; }
+  }
+  function isDue(w) { return !w.due || w.due <= Date.now(); }
+  function dueWords() { return state.words.filter(isDue).sort(function (a, b) { return (a.due || 0) - (b.due || 0); }); }
+  function renderDue() {
+    const el = $('due-note'); if (!el) return;
+    const n = dueWords().length;
+    el.hidden = state.words.length === 0;
+    el.textContent = n ? '🔁 ' + n + ' word' + (n === 1 ? '' : 's') + ' due for review — the sprint starts with ' + (n === 1 ? 'it' : 'them') + '.' : '✓ Nothing due right now. Learn something new, or sprint to get ahead.';
   }
 
   /* ---------- 15. Focus Sprint timer ---------- */
@@ -2535,7 +2635,10 @@
   function buildDrill() {
     const cards = state.words.filter(function (w) { return w.word && w.definition; });
     if (!cards.length && state.lastSearch && state.lastSearch.definition) cards.push(state.lastSearch);
-    drill.deck = shuffle(cards.slice());
+    // due words first (oldest due first), then the rest weakest-first; shuffle within each group
+    const due = shuffle(cards.filter(isDue)).sort(function (a, b) { return (a.due || 0) - (b.due || 0); });
+    const rest = shuffle(cards.filter(function (w) { return !isDue(w); })).sort(function (a, b) { return (a.mastery || 0) - (b.mastery || 0); });
+    drill.deck = due.concat(rest);
     drill.idx = 0; drill.flipped = false; drill.reviewed = 0; drill.built = true; drill.xp = 0; drill.mastered = [];
   }
 
@@ -2582,7 +2685,8 @@
         saved.mastery -= 1;
         note = ' Mastery back to ' + saved.mastery + '.';
       }
-      saveState();
+      scheduleReview(saved, gotIt);
+      saveState(); renderDue();
     }
     if (gotIt && drill.xp < DRILL_XP_CAP) { drill.xp += XP.drill; awardXP(XP.drill); }
     if (!gotIt) drill.deck.push(card); // comes back around later in the sprint
@@ -2739,6 +2843,11 @@
     $('help-tour').addEventListener('click', function () { closeDialog($('help-dialog')); window.setTimeout(startTour, 150); });
     $('help-shortcuts').addEventListener('click', function () { closeDialog($('help-dialog')); openDialog($('shortcuts-dialog')); $('shortcuts-close').focus(); });
     $('help-report').addEventListener('click', reportProblem);
+    $('help-export').addEventListener('click', exportData);
+    $('help-import').addEventListener('click', function () { $('import-file').value = ''; $('import-file').click(); });
+    $('import-file').addEventListener('change', function () { importData($('import-file').files[0]); });
+    $('fb-yes').addEventListener('click', function () { sendFeedback(true); });
+    $('fb-no').addEventListener('click', function () { sendFeedback(false); });
     $('natural-download').addEventListener('click', loadNatural);
     $('natural-toggle').addEventListener('change', function () { state.prefs.naturalVoices = $('natural-toggle').checked; saveState(); renderNaturalCard(); toast(state.prefs.naturalVoices ? 'Natural voices on ✨' : 'Back to the built-in voice.', 'info'); });
     renderNaturalCard();
@@ -2794,6 +2903,55 @@
     ].join('\n');
     const params = new URLSearchParams({ template: 'bug_report.yml', title: '[Bug] ', environment: env });
     window.open(ISSUES_URL + '?' + params.toString(), '_blank', 'noopener');
+  }
+
+  /** Everything Gengo knows lives in one localStorage key — export it as a file, import it on another device. */
+  function exportData() {
+    const payload = { app: 'gengo', version: APP_VERSION, exportedAt: new Date().toISOString(), state: state };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'gengo-backup-' + todayKey() + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    toast('Backup downloaded — keep it somewhere safe.', 'success');
+    announce('Backup file downloaded.');
+  }
+
+  function importData(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      let data;
+      try { data = JSON.parse(String(reader.result)); } catch (e) { toast('That file isn’t a Gengo backup.', 'error'); return; }
+      const incoming = data && data.app === 'gengo' && data.state ? data.state : data;
+      if (!incoming || typeof incoming !== 'object' || !Array.isArray(incoming.words)) { toast('That file isn’t a Gengo backup.', 'error'); return; }
+      const words = incoming.words.length, xp = Number(incoming.xp) || 0;
+      if (!window.confirm('Replace everything on this device with the backup? (' + words + ' words, ' + xp + ' XP)')) return;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming)); } catch (e) { toast('Couldn’t save the backup on this device.', 'error'); return; }
+      state = loadState();
+      closeDialog($('help-dialog'));
+      renderAll(); applyDisplayPrefs(); renderVoiceName();
+      toast('Backup restored: ' + words + ' words, ' + xp + ' XP.', 'celebrate');
+      announce('Backup restored.');
+      buddySay('Welcome back. I kept your carrots.', 'cheer', 3000);
+    };
+    reader.readAsText(file);
+  }
+
+  /** One-tap feedback on the daily recap. 👍 is thanks; 👎 opens a pre-filled issue so we hear why. */
+  function renderFeedback() {
+    const box = $('recap-feedback'); if (!box) return;
+    const today = todayKey();
+    box.hidden = !!(state.feedback && state.feedback.date === today);
+  }
+  function sendFeedback(up) {
+    state.feedback = { date: todayKey(), value: up ? 'up' : 'down' };
+    saveState(); renderFeedback();
+    if (up) { toast('Thanks! See you tomorrow 🥕', 'celebrate'); buddySay('That’s what I like to hear.', 'cheer', 2500); return; }
+    const d = todayStats();
+    const params = new URLSearchParams({ template: 'feature_request.yml', title: '[Feedback] Today wasn’t useful', idea: '(What would have made today better?)\n', why: 'Sent from the daily recap. Today: ' + d.xp + ' XP, ' + d.saves + ' saves, ' + d.quiz + ' quiz correct, ' + d.sprints + ' sprints. App ' + APP_VERSION + ', ' + navigator.userAgent });
+    window.open(ISSUES_URL + '?' + params.toString(), '_blank', 'noopener');
+    toast('Sorry to hear it — tell us why on the page that just opened.', 'info', 5000);
   }
 
   function registerServiceWorker() {
@@ -3263,6 +3421,7 @@
   }
 
   function renderAll() {
+    renderDue();
     renderHeader();
     renderHabit();
     renderTimer();

@@ -1701,3 +1701,23 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 .natural-status { overflow-wrap: anywhere; }
 #engine-note { text-align: left; }
 #engine-note .link-btn { display: inline; padding: 0; margin: 0; }
+
+/* ---------- 47. Translations by meaning (Wiktionary), export/import, recap feedback, due note ---------- */
+.translate-alt { margin: 0.4rem 0 0; font-size: 0.85rem; font-weight: 700; color: var(--ink-500); }
+.translate-senses { grid-column: 1 / -1; margin-top: 0.4rem; padding-top: 0.8rem; border-top: 2px dashed var(--bg-200); }
+.translate-senses .kicker { margin-bottom: 0.4rem; }
+.translate-senses .source-note { font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--ink-500); margin-left: 0.4rem; }
+.sense-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.sense { display: grid; gap: 0.3rem; }
+.sense-label { font-size: 0.85rem; font-weight: 800; color: var(--ink-700); }
+.sense-label::first-letter { text-transform: uppercase; }
+.sense-words { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.sense-chip { font-size: 1rem; }
+.sense-chip.is-playing { background: var(--accent-100); border-color: var(--accent-600); }
+.recap-feedback { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin: 0.2rem 0 0.6rem; font-weight: 800; color: var(--ink-700); }
+.recap-feedback[hidden] { display: none; }
+.fb-btn { min-width: 44px; min-height: 44px; border-radius: 50%; border: 2px solid var(--bg-200); background: #fff; font-size: 1.3rem; cursor: pointer; transition: transform 160ms var(--bounce), background 160ms var(--ease); }
+.fb-btn:hover, .fb-btn:focus-visible { transform: scale(1.12); background: var(--accent-100); border-color: var(--accent-600); outline: none; }
+.due-note { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 800; color: var(--brand-800); }
+.due-note[hidden] { display: none; }
+@media (max-width: 640px) { .translate-senses { padding-top: 0.6rem; } }

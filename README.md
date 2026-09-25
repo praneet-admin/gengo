@@ -61,9 +61,10 @@ All state lives in one versioned `localStorage` entry, `gengo-v1` (see below). `
 | Wiktionary (fallback) | `https://en.wiktionary.org/api/rest_v1/page/definition/{word}` | none |
 | Datamuse (fallback) | `https://api.datamuse.com/words?sp={word}&md=dpr&ipa=1` and `?rel_syn={word}` | none |
 | Wikipedia REST search | `https://en.wikipedia.org/w/rest.php/v1/search/page?q={query}&limit=3` | none |
+| Wiktionary parse API (single-word translations by sense) | `https://en.wiktionary.org/w/api.php?action=parse&prop=wikitext&page={word}&origin=*` | none |
 | MyMemory (translation) | `https://api.mymemory.translated.net/get?q={text}&langpair=en\|{lang}` | none (≈5,000 chars/day anonymous quota) |
 
-**Translation.** Translation works out of the box through MyMemory (free, ≈5,000 characters/day anonymous quota) — no API key and no settings screen. The LibreTranslate client code remains in `app.js` for anyone who forks the project and wants to point it at their own server, but the app ships with no key and asks for none.
+**Translation.** Single words are translated from Wiktionary's translation tables (`fetchWiktionaryTranslations`: parses `{{trans-top|sense}}…{{trans-bottom}}` blocks of the English section, follows `{{trans-see}}`/translation subpages, extracts `{{t|code|…}}` with transliterations) and shown grouped by meaning; MyMemory is the machine-translation footnote and the path for phrases. Translation otherwise works through MyMemory (free, ≈5,000 characters/day anonymous quota) — no API key and no settings screen. The LibreTranslate client code remains in `app.js` for anyone who forks the project and wants to point it at their own server, but the app ships with no key and asks for none.
 
 **Natural voices (optional, on-device).** Speak → *Download natural voices* loads [Kokoro-82M](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) through `kokoro-js` (jsDelivr) — ~90 MB, cached by the browser — and from then on English speech is synthesised locally (`af_heart` female / `am_michael` male; WebGPU when available, WASM otherwise). Generated clips are cached per text and played through an `<audio>` element, so slow replay works on them too. Opt-in (`prefs.naturalVoices`), never downloaded silently, falls back to the system voice on any failure. Non-English text keeps using the system voice for that language.
 
@@ -112,6 +113,12 @@ On first launch (no `prefs.onboarded` flag in `gengo-v1`) Gen runs a 7-step guid
 - **Share my streak**: Today card → Share (Web Share API on phones, clipboard fallback) — `shareStreak()`.
 - **Installable / offline shell**: `manifest.webmanifest` + `sw.js` (network-first, same-origin only; APIs and CDNs are never cached). Registered only on https/localhost.
 - **Report a problem**: Help → Report a problem opens a pre-filled GitHub issue form (`.github/ISSUE_TEMPLATE/bug_report.yml`) with version, browser, viewport, section and settings — `reportProblem()`.
+
+### Spaced review, backup, feedback
+
+- `scheduleReview(word, success)`: `due = now + [1,3,7,14 days][mastery]` on success, `now + 10 min` and `lapses++` on failure; called from the sprint drill and the quiz. `dueWords()` orders the sprint deck and biases quiz targets (70 % due). Fields `lastReview`, `due`, `lapses` on each word.
+- `exportData()` / `importData(file)`: the whole `gengo-v1` state as a JSON file (`{app, version, exportedAt, state}`), validated and confirmed before replacing.
+- Daily recap feedback: 👍 stored as `feedback {date, value}`; 👎 opens the *idea* issue form pre-filled with today's numbers.
 
 ## Accessibility
 

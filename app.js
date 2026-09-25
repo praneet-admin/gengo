@@ -1366,15 +1366,15 @@
     setSpeakingButton(null);
   }
 
-  /* Listen twice = slow. Like Google Translate: the first play is normal speed, playing the *same* text again is slowed
-     right down so every syllable is clear; the next play goes back to normal. */
+  /* Listen again = slow. Like Google Translate: the first play of a text is normal speed; every replay of the *same*
+     text is slowed right down so each syllable is clear. A different text starts at normal speed again. */
   const replay = { key: null, slowNext: false };
   const SLOW_RATE = 0.55;
   function replayKey(text, lang) { return (lang || '') + '|' + text; }
   function slowFor(text, lang) {
     const key = replayKey(text, lang);
     const slow = replay.key === key && replay.slowNext;
-    replay.key = key; replay.slowNext = !slow;
+    replay.key = key; replay.slowNext = true; // stays slow until a different text is played
     return slow;
   }
   function markSlowHint() {

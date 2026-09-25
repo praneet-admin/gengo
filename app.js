@@ -145,6 +145,7 @@
   }
 
   function saveState() {
+    if (typeof renderDue === 'function' && document.getElementById('due-note')) renderDue();
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (err) {
@@ -2405,7 +2406,7 @@
   function scheduleReview(word, success) {
     const now = Date.now();
     word.lastReview = now;
-    if (success) word.due = now + REVIEW_INTERVALS[Math.min(word.mastery || 0, REVIEW_INTERVALS.length - 1)];
+    if (success) word.due = now + REVIEW_INTERVALS[Math.max(0, Math.min((word.mastery || 0) - 1, REVIEW_INTERVALS.length - 1))]; // 1d after the first success, then 3d, 7d, 14d
     else { word.lapses = (word.lapses || 0) + 1; word.due = now + 10 * MINUTE; }
   }
   function isDue(w) { return !w.due || w.due <= Date.now(); }

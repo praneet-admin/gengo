@@ -1,0 +1,17 @@
+{
+  "name": "Gengo — Learn words that stick",
+  "short_name": "Gengo",
+  "description": "Free English vocabulary trainer: look up, hear, speak, quiz, keep a streak. No account.",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eee9ff",
+  "theme_color": "#3b22a8",
+  "lang": "en",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "assets/bunny-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/bunny-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/bunny-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

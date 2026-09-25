@@ -5,6 +5,7 @@
 
 **User guide:** [GUIDE.md](GUIDE.md) — everything Gengo can do, section by section, plus XP/streak rules, shortcuts and FAQ.
 **Promo video:** [docs/gengo-promo.mp4](docs/gengo-promo.mp4) (1 min 43 s, 1280×720, narrated).
+**Launch note:** [LAUNCH.md](LAUNCH.md) — who it's for, which launch jobs were done, what was skipped. Blog and post kit in [launch/](launch/). Support policy in [SUPPORT.md](SUPPORT.md).
 **Interface guide:** [UI-UX.md](UI-UX.md) — the design system, layouts, every screen and the UX flows (with screenshots).
 
 **Gengo** (from the Japanese 言語, "language") is a single-page vocabulary trainer for English learners. It helps you discover useful words, hear and say them, translate them, read them in real context, save them, and test yourself through short daily sessions built around quizzes, a five-minute focus timer, XP, daily goals, and streaks.
@@ -102,6 +103,13 @@ A web page cannot stop someone switching tabs or apps, so the sprint makes leavi
 ### First-run tour
 
 On first launch (no `prefs.onboarded` flag in `gengo-v1`) Gen runs a 7-step guided tour: a welcome card, then spotlight coach-marks (search, save/chips, navigation — the ☰ button on small screens — Focus Sprint, Today card, header stats). Implemented without a library: a fixed `.tour-spot` element whose huge `box-shadow` dims everything except the target, plus a positioned card that flips above/below/beside the target (pinned to the bottom on phones). Keyboard: →/← step, Esc skips, focus is trapped in the card; every step is announced to screen readers. The tour includes an accessibility step (display switches on desktop; screen-reader/keyboard/system-settings note on phones). An **Instructions** dialog (`#help-dialog`) is reachable from the yellow **Help** header button on desktop and the “How to use Gengo” row at the bottom of the ☰ drawer on small screens; it links to the tour and the shortcuts sheet. Replay the tour from there, from the `?` sheet, or with `Gengo.tour()`.
+
+### Launch plumbing
+
+- **Link previews**: Open Graph / Twitter meta tags + `assets/og-image.png` (1200×630).
+- **Share my streak**: Today card → Share (Web Share API on phones, clipboard fallback) — `shareStreak()`.
+- **Installable / offline shell**: `manifest.webmanifest` + `sw.js` (network-first, same-origin only; APIs and CDNs are never cached). Registered only on https/localhost.
+- **Report a problem**: Help → Report a problem opens a pre-filled GitHub issue form (`.github/ISSUE_TEMPLATE/bug_report.yml`) with version, browser, viewport, section and settings — `reportProblem()`.
 
 ## Accessibility
 

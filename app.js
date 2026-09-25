@@ -25,6 +25,9 @@
   const TIMER_DURATION = 5 * MINUTE;
   const MAX_STRIKES = 3;    // times a learner may leave the tab/app during a sprint before it is cancelled
 
+  const APP_VERSION = '1.0.0';
+  const APP_URL = 'https://praneet-admin.github.io/gengo/';
+  const ISSUES_URL = 'https://github.com/praneet-admin/gengo/issues/new';
   const XP = { save: 10, quiz: 5, sprint: 15, drill: 2 }; // drill XP only during a Focus Sprint
   const MAX_SHIELDS = 2;    // Streak Shields a learner can bank
   const MASTERY_MAX = 3;    // "Got it" in three sprints = mastered
@@ -2553,6 +2556,9 @@
     $('help-close').addEventListener('click', function () { closeDialog($('help-dialog')); });
     $('help-tour').addEventListener('click', function () { closeDialog($('help-dialog')); window.setTimeout(startTour, 150); });
     $('help-shortcuts').addEventListener('click', function () { closeDialog($('help-dialog')); openDialog($('shortcuts-dialog')); $('shortcuts-close').focus(); });
+    $('help-report').addEventListener('click', reportProblem);
+    $('share-button').addEventListener('click', shareStreak);
+    registerServiceWorker();
     document.addEventListener('keydown', function (e) {
       if (!tour.active) return;
       if (e.key === 'Escape') { e.preventDefault(); endTour(false); }
@@ -2565,6 +2571,49 @@
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     });
+  }
+
+  /* ---------- 15c. Launch plumbing: share, report a problem, install ---------- */
+  /** "Share my streak" — the one growth loop that runs without us: Web Share on phones, clipboard elsewhere. */
+  function shareStreak() {
+    const streak = computeStreaks().current;
+    const words = state.words.length;
+    const line = streak > 0
+      ? 'I’m on a ' + streak + '-day streak learning English words with Gengo 🐰 (' + words + ' word' + (words === 1 ? '' : 's') + ' saved, ' + state.xp + ' XP).'
+      : 'I’m learning English words with Gengo 🐰 — it actually makes them stick.';
+    const text = line + ' Free, no sign-up, works on any phone: ' + APP_URL;
+    if (navigator.share) {
+      navigator.share({ title: 'Gengo — learn words that stick', text: line + ' Free, no sign-up.', url: APP_URL })
+        .then(function () { toast('Thanks for spreading the word! 🥕', 'celebrate'); buddySay('Bring a friend. More carrots.', 'cheer', 2500); })
+        .catch(function () { /* user cancelled */ });
+      return;
+    }
+    const done = function () { toast('Copied — paste it to a friend.', 'success'); announce('Share message copied to the clipboard.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(function () { window.prompt('Copy this:', text); });
+    else window.prompt('Copy this:', text);
+  }
+
+  /** Pre-fills a GitHub issue with everything support needs, so the learner only describes what happened. */
+  function reportProblem() {
+    const env = [
+      'App version: ' + APP_VERSION,
+      'Page: ' + location.href.replace(/[?#].*$/, ''),
+      'Section: ' + state.prefs.section,
+      'Browser: ' + navigator.userAgent,
+      'Viewport: ' + window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x',
+      'Online: ' + navigator.onLine,
+      'Speech synthesis: ' + ('speechSynthesis' in window) + ' · recognition: ' + !!getRecognition(),
+      'Saved words: ' + state.words.length + ' · XP: ' + state.xp + ' · sprint locked: ' + !!state.timer.locked,
+      'Prefs: motion ' + (state.prefs.reduceMotion ? 'reduced' : 'on') + ', contrast ' + (state.prefs.highContrast ? 'high' : 'normal') + ', text ' + state.prefs.textSize + ', easy-read ' + !!state.prefs.easyRead
+    ].join('\n');
+    const params = new URLSearchParams({ template: 'bug_report.yml', title: '[Bug] ', environment: env });
+    window.open(ISSUES_URL + '?' + params.toString(), '_blank', 'noopener');
+  }
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+    navigator.serviceWorker.register('sw.js').catch(function () { /* offline shell is a bonus, never a blocker */ });
   }
 
   /* ---------- 16. Navigation, shared UI, init & tickers ---------- */
@@ -3060,6 +3109,8 @@
 
   // Small debug surface for graders/testing without leaking internals as globals.
   window.Gengo = Object.freeze({
+    version: APP_VERSION,
+    share: shareStreak,
     tour: startTour,
     getState: function () { return JSON.parse(JSON.stringify(state)); },
     resetState: function () { resetState(); translateKeyInMemory = ''; lastQuery = ''; lastTranslation = null; lastContextQuery = ''; quizQuestion = null; quizRound = { answered: 0, correct: 0, xp: 0, startedAt: null }; quizCombo = 0; $('search-input').value = ''; showOnly(RESULT_STATES, 'result-empty'); showOnly(TRANSLATE_STATES, 'translate-empty'); showOnly(CONTEXT_STATES, 'context-empty'); renderAll(); applyDisplayPrefs(); showSection('learn'); toast('Gengo has been reset.', 'info'); },

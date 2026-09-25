@@ -1677,3 +1677,7 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 .side-card-head { gap: 0.5rem; }
 .share-btn { margin-left: auto; margin-right: 0.4rem; }
 .side-card-head .goal-pill { order: 3; }
+
+/* ---------- 45. Listen again = slow (turtle hint on the button) ---------- */
+.speak-btn.is-slow-next .speak-label::after { content: " 🐢"; }
+.speak-btn.is-slow-next { --edge: var(--mint-500); }

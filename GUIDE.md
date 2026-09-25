@@ -118,6 +118,8 @@ Speak needs a current word — look one up in Learn first.
 ### Listening
 - Choose a voice: **Female** (default) or **Male**. On a Mac these are Karen and Daniel, the two clearest built-in voices; on other devices Gengo picks the best available English voice, and hides the switch if there's only one.
 - **Play word · Play definition · Play example · Stop**.
+- **Listen again = slow.** Like Google Translate: press any Listen/Play button a second time on the same text and Gengo plays it slowly (about half speed) so every syllable is clear — the button shows a 🐢 while that's queued. The third press is normal speed again. Works for words, meanings, examples and translations.
+- Gengo picks the most natural voice your browser has: Microsoft *Natural* voices in Edge, Google voices in Chrome on Windows/Android, Ava/Karen and Daniel on a Mac. Female is the default; Male is one tap away.
 
 ### Speaking practice
 1. Choose what to read aloud: **the word** or **the example sentence**.

@@ -1258,9 +1258,9 @@
 
   /* Curated, clear-sounding system voices (macOS, Windows, Chrome, Android). Novelty voices are excluded. */
   const VOICE_PREFS = {
-    female: ['Karen', 'Samantha', 'Microsoft Aria Online', 'Microsoft Jenny Online', 'Microsoft Zira', 'Microsoft Sonia Online', 'Microsoft Libby Online', 'Microsoft Natasha Online', 'Google US English', 'Ava', 'Allison', 'Susan', 'Zoe', 'Nicky', 'Joelle', 'Karen', 'Moira', 'Tessa', 'Fiona', 'Kate', 'Serena', 'Martha', 'Stephanie', 'Google UK English Female', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Zira', 'Microsoft Michelle', 'Microsoft Ana', 'Microsoft Emma', 'Microsoft Hazel', 'Microsoft Susan', 'Microsoft Libby', 'Microsoft Sonia', 'Microsoft Natasha', 'Microsoft Heera', 'Microsoft Neerja', 'Veena', 'Isha', 'Sangeeta',
+    female: ['Microsoft Ava Online', 'Microsoft Emma Online', 'Microsoft Aria Online', 'Microsoft Jenny Online', 'Microsoft Sonia Online', 'Microsoft Libby Online', 'Microsoft Natasha Online', 'Google US English', 'Ava', 'Karen', 'Zoe', 'Allison', 'Samantha', 'Microsoft Zira', 'Susan', 'Nicky', 'Joelle', 'Moira', 'Tessa', 'Fiona', 'Kate', 'Serena', 'Martha', 'Stephanie', 'Google UK English Female', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Zira', 'Microsoft Michelle', 'Microsoft Ana', 'Microsoft Emma', 'Microsoft Hazel', 'Microsoft Susan', 'Microsoft Libby', 'Microsoft Sonia', 'Microsoft Natasha', 'Microsoft Heera', 'Microsoft Neerja', 'Veena', 'Isha', 'Sangeeta',
       'Mónica', 'Monica', 'Paulina', 'Marisol', 'Angelica', 'Google español', 'Microsoft Elvira', 'Microsoft Dalia', 'Amélie', 'Amelie', 'Audrey', 'Aurelie', 'Google français', 'Microsoft Denise', 'Anna', 'Petra', 'Helena', 'Google Deutsch', 'Microsoft Katja', 'Alice', 'Federica', 'Google italiano', 'Microsoft Elsa', 'Joana', 'Luciana', 'Fernanda', 'Google português', 'Microsoft Francisca', 'Lekha', 'Google हिन्दी', 'Microsoft Swara', 'Kyoko', 'O-ren', 'Google 日本語', 'Microsoft Nanami', 'Vani', 'Microsoft Pallavi'],
-    male: ['Daniel', 'Microsoft Guy Online', 'Microsoft Andrew Online', 'Microsoft Ryan Online', 'Microsoft David', 'Microsoft Mark', 'Google UK English Male', 'Alex', 'Tom', 'Oliver', 'Lee', 'Evan', 'Nathan', 'Aaron', 'Arthur', 'Gordon', 'Rishi', 'Microsoft Guy', 'Microsoft Davis', 'Microsoft David', 'Microsoft Mark', 'Microsoft Ryan', 'Microsoft Christopher', 'Microsoft Eric', 'Microsoft Andrew', 'Microsoft Brian', 'Microsoft Thomas', 'Microsoft Prabhat', 'Microsoft Ravi', 'Microsoft William', 'Microsoft Liam',
+    male: ['Microsoft Andrew Online', 'Microsoft Brian Online', 'Microsoft Guy Online', 'Microsoft Ryan Online', 'Microsoft Christopher Online', 'Google UK English Male', 'Daniel', 'Alex', 'Tom', 'Oliver', 'Microsoft David', 'Microsoft Mark', 'Lee', 'Evan', 'Nathan', 'Aaron', 'Arthur', 'Gordon', 'Rishi', 'Microsoft Guy', 'Microsoft Davis', 'Microsoft David', 'Microsoft Mark', 'Microsoft Ryan', 'Microsoft Christopher', 'Microsoft Eric', 'Microsoft Andrew', 'Microsoft Brian', 'Microsoft Thomas', 'Microsoft Prabhat', 'Microsoft Ravi', 'Microsoft William', 'Microsoft Liam',
       'Jorge', 'Diego', 'Juan', 'Carlos', 'Microsoft Alvaro', 'Microsoft Jorge', 'Thomas', 'Nicolas', 'Microsoft Henri', 'Markus', 'Yannick', 'Microsoft Conrad', 'Luca', 'Microsoft Diego', 'Joaquim', 'Felipe', 'Microsoft Duarte', 'Microsoft Madhur', 'Otoya', 'Hattori', 'Microsoft Keita', 'Microsoft Valluvar']
   };
   const VOICE_BLOCKLIST = /bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|kathy|ralph|grandma|grandpa|rocko|shelley|sandy|eddy|flo|reed|compact|eloquence/i;
@@ -1269,6 +1269,19 @@
     if (!speech.supported) return;
     speech.voices = window.speechSynthesis.getVoices().slice();
     renderVoiceName();
+  }
+
+  /** Higher = more natural. Neural/online voices (Edge "Natural", Chrome "Google", macOS premium) beat classic system voices. */
+  function voiceQuality(v) {
+    const n = v.name;
+    let q = 1;
+    if (/natural|neural/i.test(n)) q = 6;
+    else if (/^Google /.test(n)) q = 5;
+    else if (/ online/i.test(n)) q = 4;
+    else if (/premium|enhanced/i.test(n) || /^(Ava|Zoe|Allison|Evan|Nathan|Tom|Aaron|Karen|Daniel)\b/.test(n)) q = 3; // macOS: Karen/Daniel stay the clear defaults
+    else if (/^(Samantha|Moira|Tessa|Fiona|Kate|Serena|Alex|Oliver|Lee|Rishi)\b/.test(n)) q = 2;
+    if (!v.localService) q += 0.5;
+    return q;
   }
 
   function matchesList(voice, names) {
@@ -1282,6 +1295,8 @@
     const clean = speech.voices.filter(function (v) { return v.lang.replace('_', '-').slice(0, 2).toLowerCase() === base && !VOICE_BLOCKLIST.test(v.name); });
     const wanted = [];
     VOICE_PREFS[want].forEach(function (n) { clean.forEach(function (v) { if (v.name.indexOf(n) === 0 && wanted.indexOf(v) === -1) wanted.push(v); }); });
+    // most natural first; the curated order only breaks ties
+    wanted.sort(function (a, b) { return voiceQuality(b) - voiceQuality(a); });
     // Voices we don't recognise by name but that aren't known to be the other gender
     const unknown = clean.filter(function (v) { return wanted.indexOf(v) === -1 && !matchesList(v, VOICE_PREFS[other]); });
     return { wanted: wanted, unknown: unknown, clean: clean };
@@ -1295,9 +1310,9 @@
     speech.lastPickExact = c.wanted.length > 0;
     const region = lang.toLowerCase();
     const sameRegion = function (v) { return v.lang.replace('_', '-').toLowerCase() === region; };
-    return c.wanted[0] // list order is the priority (Karen / Daniel first), regardless of region
-      || c.unknown.find(function (v) { return sameRegion(v) && !v.localService; }) || c.unknown.find(sameRegion) || c.unknown[0]
-      || c.clean[0] || null;
+    const best = function (list) { return list.slice().sort(function (a, b) { return voiceQuality(b) - voiceQuality(a) || (sameRegion(b) ? 1 : 0) - (sameRegion(a) ? 1 : 0); })[0]; };
+    return c.wanted[0] // quality-sorted: neural/online voices first, then Karen / Daniel-class system voices
+      || best(c.unknown) || best(c.clean) || null;
   }
 
   function renderVoiceName() {
@@ -1351,16 +1366,43 @@
     setSpeakingButton(null);
   }
 
+  /* Listen twice = slow. Like Google Translate: the first play is normal speed, playing the *same* text again is slowed
+     right down so every syllable is clear; the next play goes back to normal. */
+  const replay = { key: null, slowNext: false };
+  const SLOW_RATE = 0.55;
+  function replayKey(text, lang) { return (lang || '') + '|' + text; }
+  function slowFor(text, lang) {
+    const key = replayKey(text, lang);
+    const slow = replay.key === key && replay.slowNext;
+    replay.key = key; replay.slowNext = !slow;
+    return slow;
+  }
+  function markSlowHint() {
+    document.querySelectorAll('.speak-btn').forEach(function (b) {
+      const target = b.dataset.speak ? speakTargetText(b.dataset.speak) : null;
+      const hint = !!(target && target.text && replay.slowNext && replayKey(target.text, target.lang) === replay.key);
+      b.classList.toggle('is-slow-next', hint);
+      const base = b.getAttribute('data-label') || b.getAttribute('aria-label') || '';
+      if (!b.getAttribute('data-label')) b.setAttribute('data-label', base);
+      if (base) b.setAttribute('aria-label', hint ? base + ' — again, slowly' : base);
+      b.title = hint ? 'Play again slowly' : '';
+    });
+  }
+
   /** Speaks `text`, preferring a recorded clip when `audioUrl` is provided. Never autoplays. */
   function speakText(text, lang, button, audioUrl) {
     stopSpeech();
     if (!text) { toast('Nothing to play yet.', 'info'); return; }
+    const slow = slowFor(text, lang);
+    if (slow) announce('Playing slowly.');
 
     if (audioUrl) {
       const audio = new Audio(audioUrl);
+      audio.playbackRate = slow ? 0.6 : 1;
+      if ('preservesPitch' in audio) audio.preservesPitch = true;
       speech.activeAudio = audio;
       setSpeakingButton(button);
-      const done = function () { if (speech.activeAudio === audio) { speech.activeAudio = null; setSpeakingButton(null); } };
+      const done = function () { if (speech.activeAudio === audio) { speech.activeAudio = null; setSpeakingButton(null); markSlowHint(); } };
       audio.addEventListener('ended', done, { once: true });
       audio.addEventListener('error', function () {
         done();
@@ -1374,7 +1416,7 @@
     if (!speech.supported) { toast('This browser can’t speak text aloud.', 'error'); return; }
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang || 'en-US';
-    utterance.rate = 0.95;
+    utterance.rate = slow ? SLOW_RATE : 0.95;
     utterance.pitch = 1;
     utterance.volume = 1;
     const voice = pickVoice(utterance.lang);
@@ -1389,7 +1431,7 @@
       const langName = (Object.keys(LANGUAGES).map(function (k) { return LANGUAGES[k]; }).find(function (l) { return l.speech.slice(0, 2) === langKey; }) || { name: langKey }).name;
       toast('Only one ' + langName + ' voice is installed (' + voice.name + '), so Male and Female sound the same for ' + langName + '.', 'info', 5000);
     }
-    utterance.addEventListener('end', function () { if (speech.activeButton === button) setSpeakingButton(null); });
+    utterance.addEventListener('end', function () { if (speech.activeButton === button) setSpeakingButton(null); markSlowHint(); });
     utterance.addEventListener('error', function (e) {
       if (speech.activeButton === button) setSpeakingButton(null);
       if (e.error !== 'interrupted' && e.error !== 'canceled') toast('Speech playback failed in this browser.', 'error');

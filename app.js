@@ -1593,6 +1593,11 @@
     if (!text) { toast('Nothing to play yet.', 'info'); return; }
     const slow = typeof slowOverride === 'boolean' ? slowOverride : slowFor(text, lang);
     if (slow) announce('Playing slowly.');
+    if (!audioUrl && !skipNatural && state.prefs.naturalVoices && !naturalReady() && String(lang || 'en').slice(0, 2) === 'en' && !speech.warnedWarming) {
+      speech.warnedWarming = true;
+      toast(natural.loading ? 'Natural voice is still warming up — using the built-in voice for now.' : 'Natural voice isn’t loaded yet — using the built-in voice.', 'info', 3500);
+      if (!natural.loading && !natural.failed) loadNatural();
+    }
     if (!audioUrl && !skipNatural && useNaturalFor(lang)) {
       const token = ++speech.naturalToken;
       setSpeakingButton(button); if (button) button.classList.add('is-generating');
@@ -2852,7 +2857,10 @@
     $('natural-download').addEventListener('click', loadNatural);
     $('natural-toggle').addEventListener('change', function () { state.prefs.naturalVoices = $('natural-toggle').checked; saveState(); renderNaturalCard(); toast(state.prefs.naturalVoices ? 'Natural voices on ✨' : 'Back to the built-in voice.', 'info'); });
     renderNaturalCard();
-    if (state.prefs.naturalVoices) loadNatural(); // previously downloaded: warms from the browser cache
+    if (state.prefs.naturalVoices) { // previously downloaded: warm from the browser cache once the page is idle
+      const warm = function () { loadNatural(); };
+      if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 4000 }); else window.setTimeout(warm, 2500);
+    }
     $('share-button').addEventListener('click', shareStreak);
     registerServiceWorker();
     document.addEventListener('keydown', function (e) {
@@ -2958,7 +2966,34 @@
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
-    navigator.serviceWorker.register('sw.js').catch(function () { /* offline shell is a bonus, never a blocker */ });
+    let hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      try { reg.update(); } catch (e) { /* ignore */ }
+      // a new worker finished installing while this page is open → offer a one-tap reload
+      reg.addEventListener('updatefound', function () {
+        const w = reg.installing; if (!w) return;
+        w.addEventListener('statechange', function () {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) offerReload();
+        });
+      });
+    }).catch(function () { /* offline shell is a bonus, never a blocker */ });
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (hadController) offerReload(); hadController = true;
+    });
+  }
+
+  let reloadOffered = false;
+  function offerReload() {
+    if (reloadOffered) return; reloadOffered = true;
+    const region = $('toast-region');
+    const el = document.createElement('div');
+    el.className = 'toast is-info toast-update'; el.setAttribute('role', 'status');
+    const icon = document.createElement('span'); icon.className = 'toast-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = '↻'; el.appendChild(icon);
+    const span = document.createElement('span'); span.textContent = 'A new version of Gengo is ready. ';
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Reload';
+    btn.addEventListener('click', function () { location.reload(); });
+    el.appendChild(span); el.appendChild(btn); region.appendChild(el);
+    announce('A new version of Gengo is ready. Reload to update.');
   }
 
   /* ---------- 16. Navigation, shared UI, init & tickers ---------- */

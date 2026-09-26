@@ -1721,3 +1721,6 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 .due-note { margin: 0.35rem 0 0; font-size: 0.85rem; font-weight: 800; color: var(--brand-800); }
 .due-note[hidden] { display: none; }
 @media (max-width: 640px) { .translate-senses { padding-top: 0.6rem; } }
+
+/* update toast with inline Reload */
+.toast-update .link-btn { color: var(--brand-800); font-weight: 900; text-decoration: underline; padding: 0 0.2rem; min-height: 0; }

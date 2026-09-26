@@ -1,6 +1,6 @@
 /* Gengo service worker: makes the app installable and keeps the shell available offline.
    Network-first for everything, falling back to the cache — so updates are never stuck. */
-const CACHE = 'gengo-shell-v1';
+const CACHE = 'gengo-shell-v2';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './assets/bunny-192.png', './assets/bunny-512.png', './assets/favicon-32.png', './assets/favicon-64.png'];
 
@@ -12,8 +12,11 @@ self.addEventListener('activate', function (e) {
 });
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return; // APIs and CDNs go straight to the network
+  // Always revalidate our own HTML/JS/CSS (ETag round-trip) so a fresh deploy is never masked by the HTTP cache
+  const fresh = /\.(html|js|css|webmanifest)(\?|$)|\/$/.test(new URL(e.request.url).pathname + (new URL(e.request.url).search || ''));
+  const req = fresh ? new Request(e.request, { cache: 'no-cache' }) : e.request;
   e.respondWith(
-    fetch(e.request).then(function (res) {
+    fetch(req).then(function (res) {
       const copy = res.clone();
       caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
       return res;

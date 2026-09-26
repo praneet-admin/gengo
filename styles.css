@@ -1723,4 +1723,5 @@ body.reduce-motion .tour-card, body.reduce-motion .tour-spot { animation: none !
 @media (max-width: 640px) { .translate-senses { padding-top: 0.6rem; } }
 
 /* update toast with inline Reload */
-.toast-update .link-btn { color: var(--brand-800); font-weight: 900; text-decoration: underline; padding: 0 0.2rem; min-height: 0; }
+.toast-update .link-btn { color: var(--accent-500); font-weight: 900; text-decoration: underline; padding: 0 0.2rem; min-height: 0; margin-left: 0.3rem; }
+.toast-update .link-btn:hover, .toast-update .link-btn:focus-visible { color: #fff; }

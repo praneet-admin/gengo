@@ -78,7 +78,7 @@
       rememberKey: false,
       apiKey: ''              // only populated when the learner opts in to remembering
     },
-    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, textSize: 0, easyRead: false, voiceNotes: {}, onboarded: false, naturalVoices: false }
+    prefs: { section: 'learn', voiceGender: 'female', translateTarget: 'es', practiceTarget: 'word', speechEngine: 'auto', reduceMotion: false, highContrast: false, tvSafe: null, textSize: 0, easyRead: false, voiceNotes: {}, onboarded: false, naturalVoices: false }
   };
 
   let state = loadState();
@@ -130,6 +130,7 @@
     if (merged.prefs.voiceGender !== 'male') merged.prefs.voiceGender = 'female';
     if (!Number.isInteger(merged.prefs.textSize) || merged.prefs.textSize < 0 || merged.prefs.textSize > 2) merged.prefs.textSize = 0;
     ['reduceMotion', 'highContrast', 'easyRead', 'onboarded', 'naturalVoices'].forEach(function (k) { merged.prefs[k] = merged.prefs[k] === true; });
+    if (merged.prefs.tvSafe !== true && merged.prefs.tvSafe !== false) merged.prefs.tvSafe = null;
     if (merged.prefs.speechEngine !== 'whisper') merged.prefs.speechEngine = 'auto';
     if (!merged.prefs.voiceNotes || typeof merged.prefs.voiceNotes !== 'object') merged.prefs.voiceNotes = {};
     if (merged.prefs.practiceTarget !== 'example') merged.prefs.practiceTarget = 'word';
@@ -389,6 +390,23 @@
     $('textsize-label').textContent = size.pct === 100 ? 'Text' : size.pct + '%';
     document.body.classList.toggle('easy-read', !!state.prefs.easyRead);
     $('easyread-toggle').setAttribute('aria-pressed', state.prefs.easyRead ? 'true' : 'false');
+    applyTvSafe();
+  }
+
+  /** TV / screen-share mode. Auto: on when the page sits on a 1x display at least 1280px wide (a mirrored TV,
+   *  a projector, an external monitor); the learner can force it on or off from Help. */
+  function tvLikeDisplay() {
+    try { return window.matchMedia('(min-width: 1280px) and (max-resolution: 1.1dppx)').matches; } catch (e) { return false; }
+  }
+  function applyTvSafe() {
+    const pref = state.prefs.tvSafe;
+    const on = pref === true || (pref !== false && tvLikeDisplay());
+    document.body.classList.toggle('tv-safe', on);
+    const btn = $('help-tv');
+    if (btn) {
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = 'TV / screen-share mode: ' + (pref === null ? (on ? 'auto (on)' : 'auto (off)') : (on ? 'on' : 'off'));
+    }
   }
 
   /** Swap OS-specific wording (modifier keys, where to add voices). */
@@ -2908,7 +2926,7 @@
       'Online: ' + navigator.onLine,
       'Speech synthesis: ' + ('speechSynthesis' in window) + ' · recognition: ' + !!getRecognition(),
       'Saved words: ' + state.words.length + ' · XP: ' + state.xp + ' · sprint locked: ' + !!state.timer.locked,
-      'Prefs: motion ' + (state.prefs.reduceMotion ? 'reduced' : 'on') + ', contrast ' + (state.prefs.highContrast ? 'high' : 'normal') + ', text ' + state.prefs.textSize + ', easy-read ' + !!state.prefs.easyRead
+      'Prefs: motion ' + (state.prefs.reduceMotion ? 'reduced' : 'on') + ', contrast ' + (state.prefs.highContrast ? 'high' : 'normal') + ', tv ' + (document.body.classList.contains('tv-safe') ? 'on' : 'off') + ', text ' + state.prefs.textSize + ', easy-read ' + !!state.prefs.easyRead
     ].join('\n');
     const params = new URLSearchParams({ template: 'bug_report.yml', title: '[Bug] ', environment: env });
     window.open(ISSUES_URL + '?' + params.toString(), '_blank', 'noopener');
@@ -3401,6 +3419,13 @@
     $('motion-toggle').addEventListener('click', function () { state.prefs.reduceMotion = !state.prefs.reduceMotion; saveState(); applyDisplayPrefs(); toast(state.prefs.reduceMotion ? 'Animations reduced.' : 'Animations restored.', 'info'); });
     $('contrast-toggle').addEventListener('click', function () { state.prefs.highContrast = !state.prefs.highContrast; saveState(); applyDisplayPrefs(); toast(state.prefs.highContrast ? 'High contrast on.' : 'High contrast off.', 'info'); });
     $('textsize-toggle').addEventListener('click', function () { state.prefs.textSize = (state.prefs.textSize + 1) % TEXT_SIZES.length; saveState(); applyDisplayPrefs(); announce('Text size ' + TEXT_SIZES[state.prefs.textSize].name); });
+    $('help-tv').addEventListener('click', function () {
+      const pref = state.prefs.tvSafe; const on = document.body.classList.contains('tv-safe');
+      state.prefs.tvSafe = pref === null ? !on : (pref === true ? false : null);
+      saveState(); applyTvSafe();
+      toast(state.prefs.tvSafe === null ? 'TV mode back to automatic.' : (state.prefs.tvSafe ? 'TV / screen-share mode on: flat background, stronger borders, darker labels.' : 'TV / screen-share mode off.'), 'info');
+    });
+    try { const mq = window.matchMedia('(min-width: 1280px) and (max-resolution: 1.1dppx)'); (mq.addEventListener ? mq.addEventListener('change', applyTvSafe) : mq.addListener(applyTvSafe)); } catch (e) {}
     $('easyread-toggle').addEventListener('click', function () { state.prefs.easyRead = !state.prefs.easyRead; saveState(); applyDisplayPrefs(); toast(state.prefs.easyRead ? 'Easy-read mode on: wider spacing, plain font, longer messages.' : 'Easy-read mode off.', 'info'); });
     $('shortcuts-button').addEventListener('click', function () { openDialog($('shortcuts-dialog')); $('shortcuts-close').focus(); });
     $('shortcuts-close').addEventListener('click', function () { closeDialog($('shortcuts-dialog')); });

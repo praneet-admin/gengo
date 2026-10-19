@@ -1,6 +1,6 @@
 /* Gengo service worker: makes the app installable and keeps the shell available offline.
    Network-first for everything, falling back to the cache — so updates are never stuck. */
-const CACHE = 'gengo-shell-v2';
+const CACHE = 'gengo-shell-v3';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './assets/bunny-192.png', './assets/bunny-512.png', './assets/favicon-32.png', './assets/favicon-64.png'];
 
